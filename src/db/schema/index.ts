@@ -3,6 +3,7 @@ export * from "./blocks";
 export * from "./apartments";
 export * from "./parking_spots";
 export * from "./audit_logs";
+export * from "./users";
 
 import { relations } from "drizzle-orm";
 import { tenants } from "./tenants";
