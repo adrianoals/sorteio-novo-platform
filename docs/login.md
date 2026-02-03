@@ -49,6 +49,18 @@ Pronto. Pode fechar o computador.
 
 ---
 
+## Ver o banco de dados (Drizzle Studio)
+
+Com o Postgres rodando (`docker-compose up -d`), em outro terminal:
+
+```bash
+npm run db:studio
+```
+
+Abre uma interface no navegador para ver e editar as tabelas (tenants, apartamentos, vagas, etc.). Não precisa de outro app.
+
+---
+
 ## Resumo rápido
 
 | Quando        | O que fazer |
