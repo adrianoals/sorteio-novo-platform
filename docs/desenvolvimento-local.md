@@ -18,11 +18,14 @@ npm install
 
 ## 2. Variáveis de ambiente
 
+Copiar o exemplo e preencher. O Next.js carrega **`.env.local`** automaticamente em dev; você pode usar `.env` ou `.env.local`:
+
 ```bash
-cp .env.example .env
+cp .env.example .env.local
+# ou: cp .env.example .env
 ```
 
-Editar `.env` e preencher:
+Editar o arquivo escolhido (`.env.local` ou `.env`) e preencher:
 
 - **`DATABASE_URL`** — Para o Postgres local (Docker), use algo como:
   - `postgresql://postgres:postgres@localhost:5432/sorteionovo`
@@ -30,7 +33,7 @@ Editar `.env` e preencher:
 - **`NEXTAUTH_SECRET`** — Quando houver auth: `openssl rand -base64 32`
 - **`NEXTAUTH_URL`** — Em dev: `http://localhost:3000`
 
-Nunca commitar `.env`; o repositório já tem `.env.example` como referência.
+Nunca commitar `.env` nem `.env.local`; o repositório já tem `.env.example` como referência. Os comandos `db:migrate` e `db:seed` leem `.env.local` se existir, senão `.env`.
 
 ## 3. Subir o banco (Postgres)
 

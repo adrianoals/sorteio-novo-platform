@@ -1,10 +1,21 @@
-import "dotenv/config";
-import { db } from "./index";
-import { tenants } from "./schema/tenants";
-import { apartments } from "./schema/apartments";
-import { parkingSpots } from "./schema/parking_spots";
+import { config } from "dotenv";
+import { existsSync } from "fs";
+import { resolve } from "path";
+
+// Carregar .env.local ANTES de qualquer import que use DATABASE_URL (imports estáticos rodam primeiro)
+const envLocal = resolve(process.cwd(), ".env.local");
+if (existsSync(envLocal)) {
+  config({ path: envLocal });
+} else {
+  config();
+}
 
 async function seed() {
+  const { db } = await import("./index");
+  const { tenants } = await import("./schema/tenants");
+  const { apartments } = await import("./schema/apartments");
+  const { parkingSpots } = await import("./schema/parking_spots");
+
   const [tenant] = await db
     .insert(tenants)
     .values({
