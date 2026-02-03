@@ -1,0 +1,20 @@
+# Postgres 16 — apenas para desenvolvimento local.
+# Next.js roda no host com `npm run dev`.
+# Uso: docker-compose up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sorteionovo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sorteionovo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
