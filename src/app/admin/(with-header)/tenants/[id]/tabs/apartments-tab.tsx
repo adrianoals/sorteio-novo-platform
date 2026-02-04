@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = {
@@ -51,6 +51,19 @@ export function ApartmentsTab({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const [filterBlockId, setFilterBlockId] = useState("");
+  type ApartmentSortKey = "number" | "block" | "rights";
+  const [sortBy, setSortBy] = useState<ApartmentSortKey>("number");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: ApartmentSortKey) => {
+    if (sortBy === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+  };
 
   const load = () => {
     Promise.all([
@@ -200,11 +213,6 @@ export function ApartmentsTab({
     });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === apartments.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(apartments.map((a) => a.id)));
-  };
-
   const openBulkDeleteModal = () => setBulkDeleteModalOpen(true);
   const closeBulkDeleteModal = () => {
     if (!bulkDeleting) setBulkDeleteModalOpen(false);
@@ -235,6 +243,36 @@ export function ApartmentsTab({
     if (!blockId) return "—";
     const b = blocks.find((x) => x.id === blockId);
     return b ? b.name : blockId;
+  };
+
+  const rightsLabel = (a: Apartment) =>
+    (Array.isArray(a.rights) ? a.rights : [a.rights])
+      .map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? r)
+      .join(", ");
+
+  const displayedApartments = useMemo(() => {
+    let list = apartments;
+    if (filterBlockId) list = list.filter((a) => a.blockId === filterBlockId);
+    const getBlockName = (a: Apartment) => blockName(a.blockId);
+    const cmp = (v: number) => (v === 0 ? 0 : sortDir === "asc" ? v : -v);
+    list = [...list].sort((a, b) => {
+      let v = 0;
+      if (sortBy === "number") v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      else if (sortBy === "block") {
+        v = getBlockName(a).localeCompare(getBlockName(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      } else {
+        v = rightsLabel(a).localeCompare(rightsLabel(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      }
+      return cmp(v);
+    });
+    return list;
+  }, [apartments, filterBlockId, sortBy, sortDir, blocks]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === displayedApartments.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(displayedApartments.map((a) => a.id)));
   };
 
   const formContent = (
@@ -367,6 +405,30 @@ export function ApartmentsTab({
         </div>
       </div>
 
+      {/* Filtros e ordenação */}
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        {hasBlocks && blocks.length > 0 && (
+          <label className="flex items-center gap-2">
+            <span className="text-[#5b4d7a]">Bloco:</span>
+            <select
+              value={filterBlockId}
+              onChange={(e) => setFilterBlockId(e.target.value)}
+              className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
+            >
+              <option value="">Todos</option>
+              {blocks.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {filterBlockId && (
+          <span className="text-[#5b4d7a]">
+            {displayedApartments.length} de {apartments.length} apartamento(s)
+          </span>
+        )}
+      </div>
+
       {/* Formulário inline só para criar; edição vai para modal */}
       {showForm && !editingId && (
         <form onSubmit={submit} className="rounded-lg border border-[#e2deeb] bg-[#faf9ff] p-4 space-y-3">
@@ -476,27 +538,41 @@ export function ApartmentsTab({
               <th className="w-10 px-2 py-3">
                 <input
                   type="checkbox"
-                  checked={apartments.length > 0 && selectedIds.size === apartments.length}
+                  checked={displayedApartments.length > 0 && selectedIds.size === displayedApartments.length}
                   onChange={toggleSelectAll}
                   aria-label="Selecionar todos"
                   className="rounded border-[#e2deeb]"
                 />
               </th>
-              <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
-              <th className="px-4 py-3 font-medium text-[#3F228D]">Direitos</th>
-              {hasBlocks && <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>}
+              <th className="px-4 py-3">
+                <button type="button" onClick={() => handleSort("number")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                  Número {sortBy === "number" && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              </th>
+              <th className="px-4 py-3">
+                <button type="button" onClick={() => handleSort("rights")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                  Direitos {sortBy === "rights" && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              </th>
+              {hasBlocks && (
+                <th className="px-4 py-3">
+                  <button type="button" onClick={() => handleSort("block")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                    Bloco {sortBy === "block" && (sortDir === "asc" ? "↑" : "↓")}
+                  </button>
+                </th>
+              )}
               <th className="px-4 py-3 font-medium text-[#3F228D]" />
             </tr>
           </thead>
           <tbody>
-            {apartments.length === 0 ? (
+            {displayedApartments.length === 0 ? (
               <tr>
                 <td colSpan={hasBlocks ? 5 : 4} className="px-4 py-6 text-center text-[#5b4d7a]">
-                  Nenhum apartamento.
+                  {apartments.length === 0 ? "Nenhum apartamento." : "Nenhum apartamento com o filtro selecionado."}
                 </td>
               </tr>
             ) : (
-              apartments.map((a) => (
+              displayedApartments.map((a) => (
                 <tr key={a.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
                   <td className="w-10 px-2 py-3">
                     <input
@@ -508,11 +584,7 @@ export function ApartmentsTab({
                     />
                   </td>
                   <td className="px-4 py-3">{a.number}</td>
-                  <td className="px-4 py-3">
-                    {(Array.isArray(a.rights) ? a.rights : [a.rights])
-                      .map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? r)
-                      .join(", ")}
-                  </td>
+                  <td className="px-4 py-3">{rightsLabel(a)}</td>
                   {hasBlocks && <td className="px-4 py-3">{blockName(a.blockId)}</td>}
                   <td className="px-4 py-3">
                     <button type="button" onClick={() => openEdit(a)} className="text-[#5936CC] hover:text-[#250E62] mr-3">

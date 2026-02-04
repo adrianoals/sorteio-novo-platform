@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = { id: string; number: string; blockId: string | null };
@@ -61,6 +61,20 @@ export function SpotsTab({
   const [deleting, setDeleting] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const [filterBlockId, setFilterBlockId] = useState("");
+  const [filterBasement, setFilterBasement] = useState("");
+  type SpotSortKey = "number" | "block" | "basement" | "spotType" | "specialType";
+  const [sortBy, setSortBy] = useState<SpotSortKey>("number");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: SpotSortKey) => {
+    if (sortBy === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+  };
 
   const basements = config?.basements ?? [];
   const hasBasement = !!config?.has_basement;
@@ -183,11 +197,6 @@ export function SpotsTab({
     });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === spots.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(spots.map((s) => s.id)));
-  };
-
   const openBulkDeleteModal = () => setBulkDeleteModalOpen(true);
   const closeBulkDeleteModal = () => {
     if (!bulkDeleting) setBulkDeleteModalOpen(false);
@@ -218,6 +227,41 @@ export function SpotsTab({
     if (!blockId) return "—";
     const b = blocks.find((x) => x.id === blockId);
     return b ? b.name : blockId;
+  };
+
+  const displayedSpots = useMemo(() => {
+    let list = spots;
+    if (filterBlockId) list = list.filter((s) => s.blockId === filterBlockId);
+    if (filterBasement) list = list.filter((s) => (s.basement ?? "") === filterBasement);
+    const getBlockName = (s: Spot) => blockName(s.blockId);
+    const getBasement = (s: Spot) => s.basement ?? "";
+    const getSpotType = (s: Spot) => spotTypeLabel(s.spotType);
+    const getSpecialType = (s: Spot) => specialTypeLabel(s.specialType);
+    const cmp = (a: number) => (a === 0 ? 0 : sortDir === "asc" ? a : -a);
+    list = [...list].sort((a, b) => {
+      let v = 0;
+      if (sortBy === "number") v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      else if (sortBy === "block") {
+        v = getBlockName(a).localeCompare(getBlockName(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      } else if (sortBy === "basement") {
+        v = getBasement(a).localeCompare(getBasement(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      } else if (sortBy === "spotType") {
+        v = getSpotType(a).localeCompare(getSpotType(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      } else {
+        v = getSpecialType(a).localeCompare(getSpecialType(b), "pt-BR");
+        if (v === 0) v = String(a.number).localeCompare(String(b.number), "pt-BR", { numeric: true });
+      }
+      return cmp(v);
+    });
+    return list;
+  }, [spots, filterBlockId, filterBasement, sortBy, sortDir, blocks]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === displayedSpots.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(displayedSpots.map((s) => s.id)));
   };
 
   const apartmentName = (apartmentId: string | null) => {
@@ -271,6 +315,45 @@ export function SpotsTab({
             Nova vaga
           </button>
         </div>
+      </div>
+
+      {/* Filtros e ordenação */}
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        {hasBlocks && blocks.length > 0 && (
+          <label className="flex items-center gap-2">
+            <span className="text-[#5b4d7a]">Bloco:</span>
+            <select
+              value={filterBlockId}
+              onChange={(e) => setFilterBlockId(e.target.value)}
+              className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
+            >
+              <option value="">Todos</option>
+              {blocks.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {hasBasement && basements.length > 0 && (
+          <label className="flex items-center gap-2">
+            <span className="text-[#5b4d7a]">Subsolo:</span>
+            <select
+              value={filterBasement}
+              onChange={(e) => setFilterBasement(e.target.value)}
+              className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
+            >
+              <option value="">Todos</option>
+              {basements.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {(filterBlockId || filterBasement) && (
+          <span className="text-[#5b4d7a]">
+            {displayedSpots.length} de {spots.length} vaga(s)
+          </span>
+        )}
       </div>
 
       {/* Modal confirmação exclusão em massa */}
@@ -473,34 +556,54 @@ export function SpotsTab({
               <th className="w-10 px-2 py-3">
                 <input
                   type="checkbox"
-                  checked={spots.length > 0 && selectedIds.size === spots.length}
+                  checked={displayedSpots.length > 0 && selectedIds.size === displayedSpots.length}
                   onChange={toggleSelectAll}
                   aria-label="Selecionar todas"
                   className="rounded border-[#e2deeb]"
                 />
               </th>
-              <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
+              <th className="px-4 py-3">
+                <button type="button" onClick={() => handleSort("number")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                  Número {sortBy === "number" && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              </th>
               {hasBasement && (
-                <th className="px-4 py-3 font-medium text-[#3F228D]">Localização</th>
+                <th className="px-4 py-3">
+                  <button type="button" onClick={() => handleSort("basement")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                    Localização {sortBy === "basement" && (sortDir === "asc" ? "↑" : "↓")}
+                  </button>
+                </th>
               )}
-              <th className="px-4 py-3 font-medium text-[#3F228D]">Tipo</th>
-              <th className="px-4 py-3 font-medium text-[#3F228D]">Especial</th>
+              <th className="px-4 py-3">
+                <button type="button" onClick={() => handleSort("spotType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                  Tipo {sortBy === "spotType" && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              </th>
+              <th className="px-4 py-3">
+                <button type="button" onClick={() => handleSort("specialType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                  Especial {sortBy === "specialType" && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              </th>
               {hasBlocks && (
-                <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>
+                <th className="px-4 py-3">
+                  <button type="button" onClick={() => handleSort("block")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
+                    Bloco {sortBy === "block" && (sortDir === "asc" ? "↑" : "↓")}
+                  </button>
+                </th>
               )}
               <th className="px-4 py-3 font-medium text-[#3F228D]">Atribuído (travada)</th>
               <th className="px-4 py-3 font-medium text-[#3F228D]" />
             </tr>
           </thead>
           <tbody>
-            {spots.length === 0 ? (
+            {displayedSpots.length === 0 ? (
               <tr>
                 <td colSpan={hasBasement && hasBlocks ? 8 : hasBasement || hasBlocks ? 7 : 6} className="px-4 py-6 text-center text-[#5b4d7a]">
-                  Nenhuma vaga.
+                  {spots.length === 0 ? "Nenhuma vaga." : "Nenhuma vaga com o filtro selecionado."}
                 </td>
               </tr>
             ) : (
-              spots.map((s) => (
+              displayedSpots.map((s) => (
                 <tr key={s.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
                   <td className="w-10 px-2 py-3">
                     <input
