@@ -70,12 +70,19 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const { id: tenantId, drawId } = await params;
+  if (!tenantId || !drawId) {
+    return NextResponse.json(
+      { error: "Dados inválidos" },
+      { status: 400 }
+    );
+  }
+
   if (!(await ensureTenant(tenantId))) {
-    return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+    return NextResponse.json({ error: "Condomínio não encontrado" }, { status: 404 });
   }
 
   const [draw] = await db
@@ -85,14 +92,25 @@ export async function DELETE(
     .limit(1);
 
   if (!draw) {
-    return NextResponse.json({ error: "Sorteio não encontrado" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Sorteio não encontrado" },
+      { status: 404 }
+    );
   }
 
-  await db.delete(drawResults).where(eq(drawResults.drawId, drawId));
-  await db.delete(draws).where(eq(draws.id, drawId));
+  try {
+    await db.delete(drawResults).where(eq(drawResults.drawId, drawId));
+    await db.delete(draws).where(eq(draws.id, drawId));
+  } catch (err) {
+    console.error("Delete draw error:", err);
+    return NextResponse.json(
+      { error: "Erro ao excluir o sorteio" },
+      { status: 500 }
+    );
+  }
 
   const actorId = session.user?.id ?? session.user?.email ?? "unknown";
-  await logAudit(String(actorId), "delete", "draw", tenantId, drawId, {});
+  await logAudit(String(actorId), "delete", "draw", drawId, tenantId, {});
 
   return NextResponse.json({ ok: true });
 }

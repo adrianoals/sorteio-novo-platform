@@ -39,7 +39,7 @@ export default async function TenantDetailPage({
           href={`/admin/tenants/${tenant.id}/sorteio`}
           className="rounded-lg bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors shrink-0"
         >
-          Realizar sorteio
+          Novo sorteio
         </Link>
       </div>
       <TenantTabs tenant={tenant} />

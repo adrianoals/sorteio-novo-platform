@@ -16,7 +16,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
 
   const load = () => {
     setLoading(true);
-    fetch(`/api/admin/tenants/${tenantId}/draws`)
+    return fetch(`/api/admin/tenants/${tenantId}/draws`)
       .then((r) => r.json())
       .then((data) => setDraws(Array.isArray(data) ? data : []))
       .catch(() => setDraws([]))
@@ -30,9 +30,20 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
   function handleExcluir(drawId: string) {
     if (!confirm("Excluir este sorteio? Esta ação não pode ser desfeita.")) return;
     setDeletingId(drawId);
-    fetch(`/api/admin/tenants/${tenantId}/draws/${drawId}`, { method: "DELETE" })
-      .then((r) => {
-        if (r.ok) load();
+    fetch(`/api/admin/tenants/${tenantId}/draws/${drawId}`, {
+      method: "DELETE",
+      credentials: "include",
+    })
+      .then(async (r) => {
+        if (r.ok) {
+          await load();
+        } else {
+          const data = await r.json().catch(() => ({}));
+          alert(data.error ?? "Não foi possível excluir o sorteio. Tente novamente.");
+        }
+      })
+      .catch(() => {
+        alert("Erro de conexão ao excluir.");
       })
       .finally(() => setDeletingId(null));
   }
@@ -85,14 +96,6 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
                       className="text-[#5936CC] hover:text-[#250E62] mr-3"
                     >
                       Ver
-                    </Link>
-                    <Link
-                      href={`/admin/tenants/${tenantId}/draws/${d.id}/export`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#5936CC] hover:text-[#250E62] mr-3"
-                    >
-                      Exportar
                     </Link>
                     <button
                       type="button"
