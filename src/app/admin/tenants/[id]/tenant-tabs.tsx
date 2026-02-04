@@ -8,6 +8,7 @@ import { ApartmentsTab } from "./tabs/apartments-tab";
 import { SpotsTab } from "./tabs/spots-tab";
 import { ImportTab } from "./tabs/import-tab";
 import { StatusTab } from "./tabs/status-tab";
+import { DrawsTab } from "./tabs/draws-tab";
 
 type Tenant = {
   id: string;
@@ -29,6 +30,7 @@ const TABS = [
   { id: "apartments", label: "Apartamentos" },
   { id: "spots", label: "Vagas" },
   { id: "import", label: "Importações" },
+  { id: "draws", label: "Sorteios" },
   { id: "status", label: "Status" },
 ] as const;
 
@@ -78,6 +80,7 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
             hasBasement={!!tenant.config?.has_basement}
           />
         )}
+        {active === "draws" && <DrawsTab tenantId={tenant.id} />}
         {active === "status" && <StatusTab tenantId={tenant.id} />}
       </div>
     </div>

@@ -5,7 +5,7 @@ import type { AuditPayload } from "@/db/schema/audit_logs";
 export async function logAudit(
   actorUserId: string,
   action: "create" | "update" | "delete" | "import",
-  entityType: "tenant" | "apartment" | "spot" | "block",
+  entityType: "tenant" | "apartment" | "spot" | "block" | "draw",
   entityId: string,
   tenantId?: string | null,
   payload?: AuditPayload
