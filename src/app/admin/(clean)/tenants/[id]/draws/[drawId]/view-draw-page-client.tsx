@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -24,12 +25,14 @@ const SPECIAL_LABELS: Record<string, string> = {
 
 export function ViewDrawPageClient({
   tenantId,
+  tenantName,
   tenantSlug,
   drawId,
   createdAt,
   results,
 }: {
   tenantId: string;
+  tenantName: string;
   tenantSlug: string;
   drawId: string;
   createdAt: string;
@@ -64,10 +67,25 @@ export function ViewDrawPageClient({
   }
 
   return (
-    <div className="w-full max-w-4xl rounded-lg border border-[#e2deeb] bg-white p-8 shadow-sm">
-      <h2 className="text-xl font-medium text-[#250E62] text-center mb-6">
-        Resultados do Sorteio
-      </h2>
+    <div className="w-full max-w-4xl rounded-xl border border-[#e2deeb] bg-white p-8 shadow-lg">
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <Image
+            src="/images/LogoSorteioNovoComFundoBranco.png"
+            alt="Sorteio Novo"
+            width={120}
+            height={38}
+            className="h-10 w-auto object-contain"
+          />
+          <h1 className="text-2xl font-bold text-[#250E62]">
+            {tenantName}
+          </h1>
+        </div>
+        <p className="text-[#5b4d7a] mb-1">Sorteio de vagas de garagem</p>
+        <h2 className="text-xl font-medium text-[#250E62] mt-4">
+          Resultados do Sorteio
+        </h2>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -108,23 +126,23 @@ export function ViewDrawPageClient({
         </table>
       </div>
 
-      <p className="text-center text-[#5b4d7a] mt-6">
-        Sorteio realizado em {createdAtFormatted}.
-      </p>
+      <div className="flex flex-col items-center justify-center text-center space-y-6 mt-8">
+        <p className="text-[#5b4d7a]">
+          Sorteio realizado em {createdAtFormatted}.
+        </p>
 
-      <div className="flex flex-wrap gap-4 justify-center items-start mt-8">
         <button
           type="button"
           onClick={handleExport}
-          className="rounded-lg bg-[#250E62] px-6 py-2 text-sm text-white hover:bg-[#1e0b4f]"
+          className="rounded-lg bg-[#250E62] px-6 py-3 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors"
         >
           Exportar planilha (Excel)
         </button>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 pt-2">
           <QRCodeSVG value={resultUrl} size={160} level="M" />
-          <p className="text-sm text-[#5b4d7a] max-w-[200px] text-center">
-            Escaneie o QR Code para acessar o resultado
+          <p className="text-sm text-[#5b4d7a] max-w-[220px]">
+            Escaneie o QR Code para acessar o resultado na página pública
           </p>
         </div>
       </div>

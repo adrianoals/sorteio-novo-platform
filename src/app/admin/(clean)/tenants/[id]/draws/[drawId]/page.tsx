@@ -52,6 +52,7 @@ export default async function ViewDrawPage({
   return (
     <ViewDrawPageClient
       tenantId={tenant.id}
+      tenantName={tenant.name}
       tenantSlug={tenant.slug}
       drawId={draw.id}
       createdAt={String(draw.createdAt)}

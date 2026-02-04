@@ -96,24 +96,46 @@ export function SorteioPageClient({
     : "";
 
   return (
-    <div className="w-full max-w-4xl rounded-lg border border-[#e2deeb] bg-white p-8 shadow-sm">
+    <div className="w-full max-w-4xl rounded-xl border border-[#e2deeb] bg-white p-8 shadow-lg">
       {!draw && !loading && (
-        <div className="max-w-md mx-auto text-center">
-          <p className="text-lg text-[#5b4d7a] mb-6">
-            Clique aqui para iniciar o sorteio
+        <div className="text-center py-6">
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="flex items-center justify-center gap-4">
+              <Image
+                src="/images/LogoSorteioNovoComFundoBranco.png"
+                alt="Sorteio Novo"
+                width={120}
+                height={38}
+                className="h-10 w-auto object-contain"
+              />
+              <h1 className="text-2xl font-bold text-[#250E62]">
+                {tenantName}
+              </h1>
+            </div>
+            <p className="text-[#5b4d7a] text-lg">
+              Sorteio de vagas de garagem
+            </p>
+          </div>
+          <p className="text-[#5b4d7a] mb-8 max-w-md mx-auto">
+            Quando estiver pronto, clique no botão abaixo para realizar o sorteio na presença da assembleia.
           </p>
+          {error && (
+            <p className="text-sm text-red-600 mb-4" role="alert">
+              {error}
+            </p>
+          )}
           <button
             type="button"
             onClick={handleSortear}
-            className="rounded-lg bg-[#250E62] px-6 py-3 text-white font-medium hover:bg-[#1e0b4f] transition-colors"
+            className="rounded-lg bg-[#250E62] px-8 py-4 text-lg font-medium text-white hover:bg-[#1e0b4f] transition-colors shadow-md"
           >
-            Sortear
+            Iniciar sorteio
           </button>
         </div>
       )}
 
       {loading && (
-        <div className="flex flex-col items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-16">
           <Image
             src="/gifsorteio/sorteio-gif.gif"
             alt="Sorteando..."
@@ -122,21 +144,30 @@ export function SorteioPageClient({
             unoptimized
             className="mb-4"
           />
-          <p className="text-[#5b4d7a]">Sorteando...</p>
+          <p className="text-[#5b4d7a] text-lg">Sorteando...</p>
         </div>
-      )}
-
-      {error && (
-        <p className="text-sm text-red-600 mb-4" role="alert">
-          {error}
-        </p>
       )}
 
       {draw && !loading && (
         <div className="space-y-8">
-          <h2 className="text-xl font-medium text-[#250E62] text-center">
-            Resultados do Sorteio
-          </h2>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <Image
+                src="/images/LogoSorteioNovoComFundoBranco.png"
+                alt="Sorteio Novo"
+                width={120}
+                height={38}
+                className="h-10 w-auto object-contain"
+              />
+              <h1 className="text-2xl font-bold text-[#250E62]">
+                {tenantName}
+              </h1>
+            </div>
+            <p className="text-[#5b4d7a] mb-1">Sorteio de vagas de garagem</p>
+            <h2 className="text-xl font-medium text-[#250E62] mt-4">
+              Resultados do Sorteio
+            </h2>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -177,24 +208,24 @@ export function SorteioPageClient({
             </table>
           </div>
 
-          <p className="text-center text-[#5b4d7a]">
-            Sorteio finalizado em {createdAtFormatted}.
-          </p>
+          <div className="flex flex-col items-center justify-center text-center space-y-6">
+            <p className="text-[#5b4d7a]">
+              Sorteio finalizado em {createdAtFormatted}.
+            </p>
 
-          <div className="flex flex-wrap gap-4 justify-center items-start">
             <button
               type="button"
               onClick={handleExport}
-              className="rounded-lg bg-[#250E62] px-6 py-2 text-sm text-white hover:bg-[#1e0b4f]"
+              className="rounded-lg bg-[#250E62] px-6 py-3 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors"
             >
               Exportar planilha (Excel)
             </button>
 
             {resultUrl && (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 pt-2">
                 <QRCodeSVG value={resultUrl} size={160} level="M" />
-                <p className="text-sm text-[#5b4d7a] max-w-[200px] text-center">
-                  Escaneie o QR Code para acessar o resultado
+                <p className="text-sm text-[#5b4d7a] max-w-[220px]">
+                  Escaneie o QR Code para acessar o resultado na página pública
                 </p>
               </div>
             )}
