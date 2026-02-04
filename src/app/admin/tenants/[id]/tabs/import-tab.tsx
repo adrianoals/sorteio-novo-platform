@@ -53,14 +53,24 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h3 className="font-medium text-[#250E62] mb-2">Importar dados</h3>
-        <p className="text-sm text-[#5b4d7a] mb-4">
+        <p className="text-sm text-[#5b4d7a] mb-2">
           Envie um arquivo CSV ou Excel. Colunas esperadas:
+        </p>
+        <p className="text-sm text-[#5b4d7a] mb-4">
+          <a
+            href={type === "apartments" ? "/templates/modelo-apartamentos.csv" : "/templates/modelo-vagas.csv"}
+            download
+            className="font-medium text-[#5936CC] hover:text-[#250E62] underline"
+          >
+            Baixar planilha modelo
+          </a>
+          {" "}— preencha com seus dados e importe.
         </p>
         {type === "apartments" ? (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número do apartamento (obrigatório)</li>
             <li><strong>rights</strong> ou <strong>direitos</strong> — simple, double, two_simple, car, moto</li>
-            <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional</li>
+            <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         ) : (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
@@ -68,7 +78,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
             <li><strong>spot_type</strong> ou <strong>tipo</strong> — simple ou double</li>
             <li><strong>special_type</strong> ou <strong>especial</strong> — normal, pne, idoso, visitor</li>
             <li><strong>basement</strong> ou <strong>subsolo</strong> — opcional</li>
-            <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional</li>
+            <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         )}
       </div>
@@ -114,7 +124,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
         <button
           type="submit"
           disabled={loading || !file}
-          className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] disabled:opacity-50"
+          className="rounded bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] disabled:opacity-50"
         >
           {loading ? "Importando…" : "Importar"}
         </button>
