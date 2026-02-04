@@ -9,7 +9,15 @@ type ImportResult = {
   errors: { row: number; reason: string }[];
 };
 
-export function ImportTab({ tenantId }: { tenantId: string }) {
+export function ImportTab({
+  tenantId,
+  hasBlocks,
+  hasBasement,
+}: {
+  tenantId: string;
+  hasBlocks?: boolean;
+  hasBasement?: boolean;
+}) {
   const [type, setType] = useState<"apartments" | "spots">("apartments");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,17 +77,18 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
         {type === "apartments" ? (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>numero</strong> — número do apartamento (obrigatório)</li>
+            <li><strong>bloco</strong> — {hasBlocks ? "bloco a que o apartamento pertence." : "opcional; bloco a que o apartamento pertence."} ID do bloco (aba Blocos).</li>
             <li><strong>direitos</strong> — um ou mais: Simples, Dupla, Duas simples, Carro, Moto (separados por vírgula)</li>
-            <li><strong>localização</strong> — opcional; localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Várias separadas por vírgula. Vazio = qualquer.</li>
-            <li><strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
+            <li><strong>localização permitida</strong> — opcional; localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Várias separadas por vírgula. Vazio = qualquer.</li>
+            <li><strong>blocos permitidos</strong> — opcional; blocos em que o apartamento pode ser sorteado. IDs separados por vírgula. Vazio = qualquer.</li>
           </ul>
         ) : (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>numero</strong> — número da vaga (obrigatório)</li>
             <li><strong>tipo</strong> — Simples ou Dupla</li>
             <li><strong>especial</strong> — Normal, PNE, Idoso ou Visitante</li>
-            <li><strong>localização</strong> — opcional (ex.: Térreo, Subsolo 1)</li>
-            <li><strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
+            <li><strong>localização</strong> — {hasBasement ? "(ex.: Térreo, Subsolo 1)." : "opcional (ex.: Térreo, Subsolo 1). Vazio = qualquer."}</li>
+            <li><strong>bloco</strong> — {hasBlocks ? "bloco da vaga." : "opcional; bloco da vaga."} ID do bloco (aba Blocos).</li>
           </ul>
         )}
       </div>

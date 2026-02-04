@@ -71,7 +71,13 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
           />
         )}
         {active === "spots" && <SpotsTab tenantId={tenant.id} hasBlocks={!!tenant.config?.has_blocks} config={tenant.config} />}
-        {active === "import" && <ImportTab tenantId={tenant.id} />}
+        {active === "import" && (
+          <ImportTab
+            tenantId={tenant.id}
+            hasBlocks={!!tenant.config?.has_blocks}
+            hasBasement={!!tenant.config?.has_basement}
+          />
+        )}
         {active === "status" && <StatusTab tenantId={tenant.id} />}
       </div>
     </div>

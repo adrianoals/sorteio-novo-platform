@@ -11,9 +11,9 @@ import {
 } from "@/lib/import-apartments";
 import { logAudit } from "@/lib/audit";
 
-async function ensureTenant(tenantId: string) {
+async function getTenant(tenantId: string) {
   const [t] = await db
-    .select({ id: tenants.id })
+    .select({ id: tenants.id, config: tenants.config })
     .from(tenants)
     .where(eq(tenants.id, tenantId))
     .limit(1);
@@ -37,9 +37,11 @@ export async function POST(
   }
 
   const { id: tenantId } = await params;
-  if (!(await ensureTenant(tenantId))) {
+  const tenant = await getTenant(tenantId);
+  if (!tenant) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
+  const hasBlocks = !!(tenant.config as { has_blocks?: boolean } | null)?.has_blocks;
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -67,8 +69,13 @@ export async function POST(
       rejected++;
       continue;
     }
+    if (hasBlocks && !(row.block_id ?? "").trim()) {
+      errors.push({ row: i + 1, reason: "Bloco é obrigatório quando o condomínio usa blocos" });
+      rejected++;
+      continue;
+    }
 
-    const blockId = row.block_id ?? null;
+    const blockId = (row.block_id ?? "").trim() || null;
     const dupCondition = blockId
       ? and(
           eq(apartments.tenantId, tenantId),
@@ -99,6 +106,8 @@ export async function POST(
       rights: row.rights as ("simple" | "double" | "two_simple" | "car" | "moto")[],
       allowedSubsolos:
         row.allowed_subsolos && row.allowed_subsolos.length > 0 ? row.allowed_subsolos : undefined,
+      allowedBlocks:
+        row.allowed_blocks && row.allowed_blocks.length > 0 ? row.allowed_blocks : undefined,
     });
     inserted++;
   }

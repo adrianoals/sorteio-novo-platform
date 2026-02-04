@@ -11,9 +11,9 @@ import {
 } from "@/lib/import-spots";
 import { logAudit } from "@/lib/audit";
 
-async function ensureTenant(tenantId: string) {
+async function getTenant(tenantId: string) {
   const [t] = await db
-    .select({ id: tenants.id })
+    .select({ id: tenants.id, config: tenants.config })
     .from(tenants)
     .where(eq(tenants.id, tenantId))
     .limit(1);
@@ -43,9 +43,13 @@ export async function POST(
   }
 
   const { id: tenantId } = await params;
-  if (!(await ensureTenant(tenantId))) {
+  const tenant = await getTenant(tenantId);
+  if (!tenant) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
+  const config = (tenant.config as { has_blocks?: boolean; has_basement?: boolean } | null) ?? {};
+  const hasBlocks = !!config.has_blocks;
+  const hasBasement = !!config.has_basement;
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -73,9 +77,19 @@ export async function POST(
       rejected++;
       continue;
     }
+    if (hasBasement && !(row.basement ?? "").trim()) {
+      errors.push({ row: i + 1, reason: "Localização é obrigatória quando o condomínio usa localização" });
+      rejected++;
+      continue;
+    }
+    if (hasBlocks && !(row.block_id ?? "").trim()) {
+      errors.push({ row: i + 1, reason: "Bloco é obrigatório quando o condomínio usa blocos" });
+      rejected++;
+      continue;
+    }
 
-    const basement = row.basement ?? null;
-    const blockId = row.block_id ?? null;
+    const basement = (row.basement ?? "").trim() || null;
+    const blockId = (row.block_id ?? "").trim() || null;
     const basementCond =
       basement != null && basement !== ""
         ? eq(parkingSpots.basement, basement)

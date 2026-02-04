@@ -37,13 +37,25 @@ function parseLocalizacoes(raw: string): string[] {
     .filter(Boolean);
 }
 
+function parseIds(raw: string): string[] {
+  const s = raw.trim();
+  if (!s) return [];
+  return s
+    .split(/[,;]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export interface ApartmentRow {
   number: string;
+  /** Bloco a que o apartamento pertence. Coluna "bloco". */
   block_id?: string;
   /** Lista de direitos (ex.: simple, simple, double). Aceita coluna com valores separados por vírgula ou ponto-e-vírgula. */
   rights: string[];
   /** Localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Vazio = qualquer. */
   allowed_subsolos?: string[];
+  /** Blocos em que o apartamento pode ser sorteado (IDs). Vazio = qualquer. */
+  allowed_blocks?: string[];
 }
 
 export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
@@ -58,6 +70,8 @@ export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
   return rows.map((r) => {
     const raw = r.rights ?? r.direitos ?? r["Direitos"] ?? "simple";
     const rawLoc =
+      r["localização permitida"] ??
+      r.localização_permitida ??
       r.localização ??
       r["localização"] ??
       r.localizacoes ??
@@ -65,11 +79,18 @@ export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
       r.subsolos_permitidos ??
       r.allowed_subsolos ??
       "";
+    const rawBlocosPermitidos =
+      r["blocos permitidos"] ??
+      r.blocos_permitidos ??
+      r.blocosPermitidos ??
+      r.allowed_blocks ??
+      "";
     return {
       number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
       block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
       rights: parseRightsString(raw),
       allowed_subsolos: parseLocalizacoes(rawLoc),
+      allowed_blocks: parseIds(rawBlocosPermitidos),
     };
   });
 }
@@ -108,7 +129,9 @@ export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
     const block = String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim();
     const raw = String(r.rights ?? r.direitos ?? r["Direitos"] ?? "simple");
     const rawLoc = String(
-      r.localização ??
+      r["localização permitida"] ??
+        r.localização_permitida ??
+        r.localização ??
         r["localização"] ??
         r.localizacoes ??
         r.localizações ??
@@ -116,11 +139,19 @@ export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
         r.allowed_subsolos ??
         ""
     );
+    const rawBlocosPermitidos = String(
+      r["blocos permitidos"] ??
+        r.blocos_permitidos ??
+        r.blocosPermitidos ??
+        r.allowed_blocks ??
+        ""
+    );
     return {
       number: num,
       block_id: block || undefined,
       rights: parseRightsString(raw),
       allowed_subsolos: parseLocalizacoes(rawLoc),
+      allowed_blocks: parseIds(rawBlocosPermitidos),
     };
   });
 }
