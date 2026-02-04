@@ -97,7 +97,7 @@ export async function POST(
       .limit(1);
 
     if (existing.length) {
-      errors.push({ row: i + 1, reason: "Duplicado (número + subsolo/bloco)" });
+      errors.push({ row: i + 1, reason: "Duplicado (número + localização/bloco)" });
       rejected++;
       continue;
     }

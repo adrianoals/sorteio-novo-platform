@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Tenant = {
   id: string;
@@ -17,10 +18,13 @@ type Tenant = {
 };
 
 export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
+  const router = useRouter();
   const [hasBlocks, setHasBlocks] = useState(!!tenant.config?.has_blocks);
   const [hasBasement, setHasBasement] = useState(!!tenant.config?.has_basement);
   const [basements, setBasements] = useState<string[]>(
-    tenant.config?.basements?.length ? [...tenant.config.basements] : [""]
+    (tenant.config?.basements && tenant.config.basements.length > 0)
+      ? [...tenant.config.basements]
+      : [""]
   );
   const [pne, setPne] = useState(!!tenant.config?.enabled_features?.pne);
   const [idoso, setIdoso] = useState(!!tenant.config?.enabled_features?.idoso);
@@ -66,11 +70,37 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMessage({ type: "error", text: data.error ?? "Erro ao salvar." });
+        const detail = data.details?.fieldErrors?.config
+          ? String(data.details.fieldErrors.config)
+          : data.details?.formErrors?.length
+            ? data.details.formErrors.join(", ")
+            : null;
+        setMessage({
+          type: "error",
+          text: data.error ?? "Erro ao salvar." + (detail ? ` (${detail})` : ""),
+        });
         setSaving(false);
         return;
       }
       setMessage({ type: "ok", text: "Salvo." });
+      const updated = data as Tenant;
+      if (updated.config) {
+        setHasBlocks(!!updated.config.has_blocks);
+        setHasBasement(!!updated.config.has_basement);
+        setBasements(
+          (updated.config.basements && updated.config.basements.length > 0)
+            ? [...updated.config.basements]
+            : [""]
+        );
+        if (updated.config.enabled_features) {
+          setPne(!!updated.config.enabled_features.pne);
+          setIdoso(!!updated.config.enabled_features.idoso);
+        }
+        if (updated.config.intended_draw_type) {
+          setIntendedDrawType(updated.config.intended_draw_type);
+        }
+      }
+      router.refresh();
     } catch {
       setMessage({ type: "error", text: "Erro de conexão." });
     }
@@ -126,13 +156,14 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
             checked={hasBasement}
             onChange={(e) => setHasBasement(e.target.checked)}
           />
-          <span className="text-sm">Usa subsolo</span>
+          <span className="text-sm">Usar localização de vaga</span>
         </label>
         {hasBasement && (
           <div>
             <label className="block text-sm font-medium text-[#3F228D] mb-1">
-              Subsolos
+              Localizações
             </label>
+            <p className="text-xs text-[#5b4d7a] mb-1">Ex.: Térreo, Subsolo 1, Subsolo 2 — cada vaga poderá ser vinculada a uma.</p>
             <div className="space-y-2">
               {basements.map((b, i) => (
                 <div key={i} className="flex gap-2">
@@ -140,7 +171,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
                     type="text"
                     value={b}
                     onChange={(e) => setBasementAt(i, e.target.value)}
-                    placeholder="Ex: Subsolo 1"
+                    placeholder="Ex: Térreo, Subsolo 1"
                     className="flex-1 rounded border border-[#e2deeb] px-3 py-2"
                   />
                   <button
@@ -157,7 +188,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
                 onClick={addBasement}
                 className="text-sm text-[#5936CC] hover:text-[#250E62]"
               >
-                + Adicionar subsolo
+                + Adicionar localização
               </button>
             </div>
           </div>
@@ -187,14 +218,17 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
           <label className="block text-sm font-medium text-[#3F228D] mb-1">
             Tipo de sorteio pretendido
           </label>
+          <p className="text-xs text-[#5b4d7a] mb-1">
+            Define qual modelo de sorteio este condomínio usará quando o sorteio for executado. Por enquanto só fica salvo; a execução vem em versão futura.
+          </p>
           <select
             value={intendedDrawType}
             onChange={(e) => setIntendedDrawType(e.target.value)}
             className="rounded border border-[#e2deeb] px-3 py-2"
           >
-            <option value="S1">S1</option>
-            <option value="S2">S2</option>
-            <option value="S3">S3</option>
+            <option value="S1">S1 — Simples em lote</option>
+            <option value="S2">S2 — Com presença</option>
+            <option value="S3">S3 — Duplas / PNE / regras avançadas</option>
           </select>
         </div>
       </div>

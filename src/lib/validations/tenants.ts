@@ -24,7 +24,7 @@ export const updateTenantSchema = z.object({
     .object({
       has_blocks: z.boolean().optional(),
       has_basement: z.boolean().optional(),
-      basements: z.array(z.string()).optional(),
+      basements: z.array(z.string().max(100)).optional(),
       enabled_features: z
         .object({
           pne: z.boolean().optional(),
@@ -33,6 +33,7 @@ export const updateTenantSchema = z.object({
         .optional(),
       intended_draw_type: z.enum(["S1", "S2", "S3"]).optional(),
     })
+    .passthrough()
     .optional(),
 });
 

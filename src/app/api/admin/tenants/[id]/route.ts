@@ -84,7 +84,9 @@ export async function PATCH(
   if (parsed.data.name !== undefined) update.name = parsed.data.name;
   if (parsed.data.slug !== undefined) update.slug = parsed.data.slug;
   if (parsed.data.status !== undefined) update.status = parsed.data.status;
-  if (parsed.data.config !== undefined) update.config = parsed.data.config;
+  if (parsed.data.config !== undefined) {
+    update.config = JSON.parse(JSON.stringify(parsed.data.config)) as Record<string, unknown>;
+  }
 
   const [updated] = await db
     .update(tenants)

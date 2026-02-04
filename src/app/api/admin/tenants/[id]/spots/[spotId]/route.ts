@@ -69,7 +69,7 @@ export async function PATCH(
     .limit(1);
   if (duplicate.length) {
     return NextResponse.json(
-      { error: "Já existe vaga com este número (e subsolo/bloco).", field: "number" },
+      { error: "Já existe vaga com este número (e localização/bloco).", field: "number" },
       { status: 409 }
     );
   }

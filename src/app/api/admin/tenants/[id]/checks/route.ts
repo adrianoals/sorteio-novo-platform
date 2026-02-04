@@ -80,7 +80,7 @@ export async function GET(
     for (const s of spotList) {
       if (s.basement && !validBasements.has(s.basement)) {
         warnings.push(
-          `Vaga "${s.number}" tem subsolo "${s.basement}" fora da lista configurada.`
+          `Vaga "${s.number}" tem localização "${s.basement}" fora da lista configurada.`
         );
       }
     }

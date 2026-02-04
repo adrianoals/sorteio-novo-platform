@@ -205,7 +205,7 @@ export function SpotsTab({
           {hasBasement && (
             <div>
               <label className="block text-sm font-medium text-[#3F228D] mb-1">
-                Subsolo
+                Localização
               </label>
               {basements.length ? (
                 <select
@@ -224,7 +224,7 @@ export function SpotsTab({
                   type="text"
                   value={formBasement}
                   onChange={(e) => setFormBasement(e.target.value)}
-                  placeholder="Ex: Subsolo 1"
+                  placeholder="Ex: Térreo, Subsolo 1"
                   className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
                 />
               )}
@@ -307,7 +307,7 @@ export function SpotsTab({
             <tr>
               <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
               {hasBasement && (
-                <th className="px-4 py-3 font-medium text-[#3F228D]">Subsolo</th>
+                <th className="px-4 py-3 font-medium text-[#3F228D]">Localização</th>
               )}
               <th className="px-4 py-3 font-medium text-[#3F228D]">Tipo</th>
               <th className="px-4 py-3 font-medium text-[#3F228D]">Especial</th>

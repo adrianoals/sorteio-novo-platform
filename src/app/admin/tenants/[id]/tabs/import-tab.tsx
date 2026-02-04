@@ -77,7 +77,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
             <li><strong>number</strong> ou <strong>numero</strong> — número da vaga (obrigatório)</li>
             <li><strong>spot_type</strong> ou <strong>tipo</strong> — simple ou double</li>
             <li><strong>special_type</strong> ou <strong>especial</strong> — normal, pne, idoso, visitor</li>
-            <li><strong>basement</strong> ou <strong>subsolo</strong> — opcional</li>
+            <li><strong>basement</strong> ou <strong>subsolo</strong> / <strong>localização</strong> — opcional (ex.: Térreo, Subsolo 1)</li>
             <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         )}

@@ -23,9 +23,13 @@ const RIGHTS_OPTIONS = [
 export function ApartmentsTab({
   tenantId,
   hasBlocks,
+  hasBasement,
+  basements,
 }: {
   tenantId: string;
   hasBlocks: boolean;
+  hasBasement: boolean;
+  basements: string[];
 }) {
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -36,8 +40,10 @@ export function ApartmentsTab({
   const [formBlockId, setFormBlockId] = useState("");
   const [formRights, setFormRights] = useState<string[]>([]);
   const [formAddRight, setFormAddRight] = useState("simple");
-  const [formAllowedSubsolos, setFormAllowedSubsolos] = useState("");
+  const [formAllowedSubsolos, setFormAllowedSubsolos] = useState<string[]>([]);
+  const [formAddSubsolo, setFormAddSubsolo] = useState("");
   const [formAllowedBlocks, setFormAllowedBlocks] = useState<string[]>([]);
+  const [formAddBlockId, setFormAddBlockId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,8 +72,10 @@ export function ApartmentsTab({
     setFormNumber("");
     setFormBlockId("");
     setFormRights(["simple"]);
-    setFormAllowedSubsolos("");
+    setFormAllowedSubsolos([]);
     setFormAllowedBlocks([]);
+    setFormAddSubsolo(basements[0] ?? "");
+    setFormAddBlockId(blocks[0]?.id ?? "");
     setShowForm(true);
     setError(null);
   };
@@ -77,8 +85,10 @@ export function ApartmentsTab({
     setFormNumber(a.number);
     setFormBlockId(a.blockId ?? "");
     setFormRights(Array.isArray(a.rights) && a.rights.length ? [...a.rights] : ["simple"]);
-    setFormAllowedSubsolos((a.allowedSubsolos ?? []).join(", "));
-    setFormAllowedBlocks(a.allowedBlocks ?? []);
+    setFormAllowedSubsolos([...(a.allowedSubsolos ?? [])]);
+    setFormAllowedBlocks([...(a.allowedBlocks ?? [])]);
+    setFormAddSubsolo(basements[0] ?? "");
+    setFormAddBlockId(blocks[0]?.id ?? "");
     setShowForm(true);
     setError(null);
   };
@@ -88,6 +98,22 @@ export function ApartmentsTab({
   };
   const removeRight = (index: number) => {
     setFormRights((prev) => prev.filter((_, i) => i !== index));
+  };
+  const addSubsolo = () => {
+    if (formAddSubsolo && !formAllowedSubsolos.includes(formAddSubsolo)) {
+      setFormAllowedSubsolos((prev) => [...prev, formAddSubsolo]);
+    }
+  };
+  const removeSubsolo = (index: number) => {
+    setFormAllowedSubsolos((prev) => prev.filter((_, i) => i !== index));
+  };
+  const addBlock = () => {
+    if (formAddBlockId && !formAllowedBlocks.includes(formAddBlockId)) {
+      setFormAllowedBlocks((prev) => [...prev, formAddBlockId]);
+    }
+  };
+  const removeBlock = (index: number) => {
+    setFormAllowedBlocks((prev) => prev.filter((_, i) => i !== index));
   };
 
   const closeForm = () => {
@@ -106,13 +132,12 @@ export function ApartmentsTab({
         : `/api/admin/tenants/${tenantId}/apartments`;
       const method = editingId ? "PATCH" : "POST";
       const rights = formRights.length ? formRights : ["simple"];
-      const allowedSubsolos = formAllowedSubsolos.trim()
-        ? formAllowedSubsolos.split(",").map((s) => s.trim()).filter(Boolean)
-        : null;
-      const allowedBlocks = formAllowedBlocks.length ? formAllowedBlocks : null;
+      const allowedSubsolos = hasBasement && formAllowedSubsolos.length ? formAllowedSubsolos : null;
+      const allowedBlocks = hasBlocks && formAllowedBlocks.length ? formAllowedBlocks : null;
+      const blockId = hasBlocks ? (formBlockId || null) : null;
       const body = editingId
-        ? { number: formNumber, blockId: formBlockId || null, rights, allowedSubsolos, allowedBlocks }
-        : { number: formNumber, blockId: formBlockId || null, rights, allowedSubsolos, allowedBlocks };
+        ? { number: formNumber, blockId, rights, allowedSubsolos, allowedBlocks }
+        : { number: formNumber, blockId, rights, allowedSubsolos, allowedBlocks };
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -233,36 +258,73 @@ export function ApartmentsTab({
               </button>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[#3F228D] mb-1">
-              Subsolos permitidos (opcional)
-            </label>
-            <input
-              type="text"
-              value={formAllowedSubsolos}
-              onChange={(e) => setFormAllowedSubsolos(e.target.value)}
-              placeholder="Ex: Subsolo 1, Subsolo 2 — vazio = qualquer"
-              className="w-full max-w-md rounded border border-[#e2deeb] px-3 py-2 text-sm"
-            />
-          </div>
-          {hasBlocks && (
+          {hasBasement && basements.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-[#3F228D] mb-1">
+                Localizações permitidas (opcional)
+              </label>
+              <p className="text-xs text-[#5b4d7a] mb-1">Vazio = qualquer localização. Selecione para restringir.</p>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                {formAllowedSubsolos.map((sub, i) => (
+                  <span
+                    key={`${sub}-${i}`}
+                    className="inline-flex items-center gap-1 rounded bg-[#e2deeb] px-2 py-0.5 text-sm"
+                  >
+                    {sub}
+                    <button type="button" onClick={() => removeSubsolo(i)} className="text-[#5b4d7a] hover:text-red-600" aria-label="Remover">×</button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={formAddSubsolo}
+                  onChange={(e) => setFormAddSubsolo(e.target.value)}
+                  className="rounded border border-[#e2deeb] px-3 py-2 text-sm"
+                >
+                  {basements.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+                <button type="button" onClick={addSubsolo} className="rounded border border-[#e2deeb] px-3 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff]">
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          )}
+          {hasBlocks && blocks.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-[#3F228D] mb-1">
                 Blocos permitidos (opcional)
               </label>
-              <select
-                multiple
-                value={formAllowedBlocks}
-                onChange={(e) => setFormAllowedBlocks(Array.from(e.target.selectedOptions, (o) => o.value))}
-                className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2 text-sm"
-              >
-                {blocks.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-[#5b4d7a] mt-0.5">Segure Ctrl/Cmd para múltiplos. Vazio = qualquer bloco.</p>
+              <p className="text-xs text-[#5b4d7a] mb-1">Vazio = qualquer bloco. Selecione para restringir.</p>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                {formAllowedBlocks.map((blockId, i) => {
+                  const b = blocks.find((x) => x.id === blockId);
+                  return (
+                    <span
+                      key={`${blockId}-${i}`}
+                      className="inline-flex items-center gap-1 rounded bg-[#e2deeb] px-2 py-0.5 text-sm"
+                    >
+                      {b ? b.name : blockId.slice(0, 8)}
+                      <button type="button" onClick={() => removeBlock(i)} className="text-[#5b4d7a] hover:text-red-600" aria-label="Remover">×</button>
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={formAddBlockId}
+                  onChange={(e) => setFormAddBlockId(e.target.value)}
+                  className="rounded border border-[#e2deeb] px-3 py-2 text-sm"
+                >
+                  {blocks.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+                <button type="button" onClick={addBlock} className="rounded border border-[#e2deeb] px-3 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff]">
+                  Adicionar
+                </button>
+              </div>
             </div>
           )}
           {error && (
