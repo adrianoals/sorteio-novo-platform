@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
 type ResultRow = {
@@ -95,7 +96,7 @@ export function SorteioPageClient({
     : "";
 
   return (
-    <div className="rounded-lg border border-[#e2deeb] bg-white p-8 shadow-sm">
+    <div className="w-full max-w-4xl rounded-lg border border-[#e2deeb] bg-white p-8 shadow-sm">
       {!draw && !loading && (
         <div className="max-w-md mx-auto text-center">
           <p className="text-lg text-[#5b4d7a] mb-6">
@@ -186,7 +187,7 @@ export function SorteioPageClient({
               onClick={handleExport}
               className="rounded-lg bg-[#250E62] px-6 py-2 text-sm text-white hover:bg-[#1e0b4f]"
             >
-              Exportar planilha
+              Exportar planilha (Excel)
             </button>
 
             {resultUrl && (
@@ -199,15 +200,14 @@ export function SorteioPageClient({
             )}
           </div>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={handleSortear}
-              className="text-sm text-[#5936CC] hover:text-[#250E62] underline"
+          <p className="text-center pt-4">
+            <Link
+              href={`/admin/tenants/${tenantId}`}
+              className="text-sm text-[#5936CC] hover:text-[#250E62]"
             >
-              Realizar novo sorteio
-            </button>
-          </div>
+              ← Voltar ao condomínio
+            </Link>
+          </p>
         </div>
       )}
     </div>

@@ -22,7 +22,7 @@ export default async function TenantDetailPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <Link
             href="/admin"
@@ -35,6 +35,12 @@ export default async function TenantDetailPage({
           </h1>
           <p className="text-sm text-[#5b4d7a]">{tenant.slug}</p>
         </div>
+        <Link
+          href={`/admin/tenants/${tenant.id}/sorteio`}
+          className="rounded-lg bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors shrink-0"
+        >
+          Realizar sorteio
+        </Link>
       </div>
       <TenantTabs tenant={tenant} />
     </div>

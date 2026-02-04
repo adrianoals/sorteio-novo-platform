@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { tenants } from "@/db/schema";
@@ -25,23 +24,10 @@ export default async function SorteioPage({
   if (!tenant) notFound();
 
   return (
-    <div>
-      <div className="mb-6">
-        <Link
-          href={`/admin/tenants/${tenant.id}`}
-          className="text-sm font-medium text-[#5936CC] hover:text-[#250E62]"
-        >
-          ← {tenant.name}
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold text-[#250E62]">
-          Sorteio de Vagas — {tenant.name}
-        </h1>
-      </div>
-      <SorteioPageClient
-        tenantId={tenant.id}
-        tenantName={tenant.name}
-        tenantSlug={tenant.slug}
-      />
-    </div>
+    <SorteioPageClient
+      tenantId={tenant.id}
+      tenantName={tenant.name}
+      tenantSlug={tenant.slug}
+    />
   );
 }

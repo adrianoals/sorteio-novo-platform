@@ -53,15 +53,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-[#250E62]">Sorteios</h3>
-        <Link
-          href={`/admin/tenants/${tenantId}/sorteio`}
-          className="rounded-lg bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f]"
-        >
-          Realizar sorteio
-        </Link>
-      </div>
+      <h3 className="font-medium text-[#250E62]">Sorteios</h3>
 
       {loading ? (
         <p className="text-[#5b4d7a]">Carregando…</p>
@@ -89,6 +81,12 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
                   <td className="px-4 py-3">{d.resultCount}</td>
                   <td className="px-4 py-3">
                     <Link
+                      href={`/admin/tenants/${tenantId}/draws/${d.id}`}
+                      className="text-[#5936CC] hover:text-[#250E62] mr-3"
+                    >
+                      Ver
+                    </Link>
+                    <Link
                       href={`/admin/tenants/${tenantId}/draws/${d.id}/export`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -98,7 +96,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleZerar(d.id)}
+                      onClick={() => handleExcluir(d.id)}
                       disabled={deletingId === d.id}
                       className="text-red-600 hover:text-red-800 disabled:opacity-50"
                     >
