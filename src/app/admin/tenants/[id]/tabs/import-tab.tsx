@@ -69,14 +69,14 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
         {type === "apartments" ? (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número do apartamento (obrigatório)</li>
-            <li><strong>rights</strong> ou <strong>direitos</strong> — um ou mais: simple, double, two_simple, car, moto (separados por vírgula para vários direitos)</li>
+            <li><strong>rights</strong> ou <strong>direitos</strong> — um ou mais: Simples, Dupla, Duas simples, Carro, Moto (valores: simple, double, two_simple, car, moto; separados por vírgula)</li>
             <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         ) : (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número da vaga (obrigatório)</li>
-            <li><strong>spot_type</strong> ou <strong>tipo</strong> — simple ou double</li>
-            <li><strong>special_type</strong> ou <strong>especial</strong> — normal, pne, idoso, visitor</li>
+            <li><strong>spot_type</strong> ou <strong>tipo</strong> — Simples ou Dupla (valores: simple, double)</li>
+            <li><strong>special_type</strong> ou <strong>especial</strong> — Normal, PNE, Idoso, Visitante (valores: normal, pne, idoso, visitor)</li>
             <li><strong>basement</strong> ou <strong>subsolo</strong> / <strong>localização</strong> — opcional (ex.: Térreo, Subsolo 1)</li>
             <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>

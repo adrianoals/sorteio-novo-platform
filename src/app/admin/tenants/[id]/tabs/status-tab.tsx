@@ -15,6 +15,25 @@ type ChecksResult = {
   };
 };
 
+const RIGHTS_LABELS: Record<string, string> = {
+  simple: "Simples",
+  double: "Dupla",
+  two_simple: "Duas simples",
+  car: "Carro",
+  moto: "Moto",
+};
+const SPOT_TYPE_LABELS: Record<string, string> = {
+  simple: "Simples",
+  double: "Dupla",
+};
+
+function labelRight(k: string): string {
+  return RIGHTS_LABELS[k] ?? k;
+}
+function labelSpotType(k: string): string {
+  return SPOT_TYPE_LABELS[k] ?? k;
+}
+
 export function StatusTab({ tenantId }: { tenantId: string }) {
   const [result, setResult] = useState<ChecksResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +99,7 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
             <p className="text-sm text-[#5b4d7a] mt-1">
               Por direitos:{" "}
               {Object.entries(result.counts.apartmentsByRights)
-                .map(([k, v]) => `${k}: ${v}`)
+                .map(([k, v]) => `${labelRight(k)}: ${v}`)
                 .join(", ")}
             </p>
           )}
@@ -88,7 +107,7 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
             <p className="text-sm text-[#5b4d7a] mt-1">
               Por tipo de vaga:{" "}
               {Object.entries(result.counts.spotsByType)
-                .map(([k, v]) => `${k}: ${v}`)
+                .map(([k, v]) => `${labelSpotType(k)}: ${v}`)
                 .join(", ")}
             </p>
           )}

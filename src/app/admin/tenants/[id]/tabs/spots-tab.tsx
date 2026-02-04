@@ -14,6 +14,25 @@ type Spot = {
   apartmentId: string | null;
 };
 
+const SPOT_TYPE_LABELS: Record<string, string> = {
+  simple: "Simples",
+  double: "Dupla",
+};
+const SPECIAL_TYPE_LABELS: Record<string, string> = {
+  normal: "Normal",
+  pne: "PNE",
+  idoso: "Idoso",
+  visitor: "Visitante",
+};
+
+function spotTypeLabel(value: string): string {
+  return SPOT_TYPE_LABELS[value] ?? value;
+}
+function specialTypeLabel(value: string | null): string {
+  if (!value) return "—";
+  return SPECIAL_TYPE_LABELS[value] ?? value;
+}
+
 export function SpotsTab({
   tenantId,
   hasBlocks,
@@ -332,8 +351,8 @@ export function SpotsTab({
                   {hasBasement && (
                     <td className="px-4 py-3">{s.basement ?? "—"}</td>
                   )}
-                  <td className="px-4 py-3">{s.spotType}</td>
-                  <td className="px-4 py-3">{s.specialType ?? "—"}</td>
+                  <td className="px-4 py-3">{spotTypeLabel(s.spotType)}</td>
+                  <td className="px-4 py-3">{specialTypeLabel(s.specialType)}</td>
                   {hasBlocks && (
                     <td className="px-4 py-3">{blockName(s.blockId)}</td>
                   )}
