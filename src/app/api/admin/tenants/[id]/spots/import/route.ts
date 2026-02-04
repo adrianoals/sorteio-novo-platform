@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tenants, parkingSpots } from "@/db/schema";
+import { tenants, parkingSpots, blocks } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import {
-  parseSpotCsv,
-  parseSpotXlsx,
+  parseSpotCsvRaw,
+  parseSpotXlsxRaw,
+  mapRawRowToSpotRow,
   validateSpotRow,
   type SpotRow,
+  type SpotConfig,
+  type BlockInfo,
 } from "@/lib/import-spots";
 import { logAudit } from "@/lib/audit";
 
@@ -20,17 +23,23 @@ async function getTenant(tenantId: string) {
   return t ?? null;
 }
 
-function getRows(buffer: Buffer, contentType: string, filename: string): SpotRow[] {
-  const isCsv =
-    contentType === "text/csv" ||
-    contentType === "application/csv" ||
-    filename.toLowerCase().endsWith(".csv");
-  const isXlsx =
-    filename.toLowerCase().endsWith(".xlsx") ||
-    filename.toLowerCase().endsWith(".xls") ||
-    buffer[0] === 0x50; // PK
-  if (isXlsx) return parseSpotXlsx(buffer);
-  return parseSpotCsv(buffer);
+function getBlocks(tenantId: string): Promise<BlockInfo[]> {
+  return db
+    .select({ id: blocks.id, name: blocks.name, code: blocks.code })
+    .from(blocks)
+    .where(eq(blocks.tenantId, tenantId))
+    .orderBy(blocks.name);
+}
+
+function getRawRows(
+  buffer: Buffer,
+  contentType: string,
+  filename: string
+): Record<string, string>[] {
+  const fn = filename.toLowerCase();
+  const isXlsx = fn.endsWith(".xlsx") || fn.endsWith(".xls") || buffer[0] === 0x50;
+  if (isXlsx) return parseSpotXlsxRaw(buffer);
+  return parseSpotCsvRaw(buffer);
 }
 
 export async function POST(
@@ -47,9 +56,10 @@ export async function POST(
   if (!tenant) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
-  const config = (tenant.config as { has_blocks?: boolean; has_basement?: boolean } | null) ?? {};
+  const config = (tenant.config as SpotConfig | null) ?? {};
   const hasBlocks = !!config.has_blocks;
   const hasBasement = !!config.has_basement;
+  const blocksList = await getBlocks(tenantId);
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -63,7 +73,10 @@ export async function POST(
   const buffer = Buffer.from(await file.arrayBuffer());
   const contentType = file.type || "";
   const filename = file.name || "";
-  const rows = getRows(buffer, contentType, filename);
+  const rawRows = getRawRows(buffer, contentType, filename);
+  const rows: SpotRow[] = rawRows
+    .map((raw) => mapRawRowToSpotRow(raw, config, blocksList))
+    .filter((r) => r.number.trim() !== "");
 
   const errors: { row: number; reason: string }[] = [];
   let inserted = 0;

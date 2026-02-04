@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tenants, apartments } from "@/db/schema";
+import { tenants, apartments, blocks } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import {
-  parseApartmentCsv,
-  parseApartmentXlsx,
+  parseApartmentCsvRaw,
+  parseApartmentXlsxRaw,
+  mapRawRowToApartmentRow,
   validateApartmentRow,
   type ApartmentRow,
+  type ApartmentConfig,
+  type BlockInfo,
 } from "@/lib/import-apartments";
 import { logAudit } from "@/lib/audit";
 
@@ -20,11 +23,23 @@ async function getTenant(tenantId: string) {
   return t ?? null;
 }
 
-function getRows(buffer: Buffer, contentType: string, filename: string): ApartmentRow[] {
+function getBlocks(tenantId: string): Promise<BlockInfo[]> {
+  return db
+    .select({ id: blocks.id, name: blocks.name, code: blocks.code })
+    .from(blocks)
+    .where(eq(blocks.tenantId, tenantId))
+    .orderBy(blocks.name);
+}
+
+function getRawRows(
+  buffer: Buffer,
+  contentType: string,
+  filename: string
+): Record<string, string>[] {
   const fn = filename.toLowerCase();
   const isXlsx = fn.endsWith(".xlsx") || fn.endsWith(".xls") || buffer[0] === 0x50;
-  if (isXlsx) return parseApartmentXlsx(buffer);
-  return parseApartmentCsv(buffer);
+  if (isXlsx) return parseApartmentXlsxRaw(buffer);
+  return parseApartmentCsvRaw(buffer);
 }
 
 export async function POST(
@@ -41,7 +56,9 @@ export async function POST(
   if (!tenant) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
-  const hasBlocks = !!(tenant.config as { has_blocks?: boolean } | null)?.has_blocks;
+  const config = (tenant.config as ApartmentConfig | null) ?? {};
+  const hasBlocks = !!config.has_blocks;
+  const blocksList = await getBlocks(tenantId);
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -55,7 +72,10 @@ export async function POST(
   const buffer = Buffer.from(await file.arrayBuffer());
   const contentType = file.type || "";
   const filename = file.name || "";
-  const rows = getRows(buffer, contentType, filename);
+  const rawRows = getRawRows(buffer, contentType, filename);
+  const rows: ApartmentRow[] = rawRows
+    .map((raw) => mapRawRowToApartmentRow(raw, config, blocksList))
+    .filter((r) => r.number.trim() !== "");
 
   const errors: { row: number; reason: string }[] = [];
   let inserted = 0;

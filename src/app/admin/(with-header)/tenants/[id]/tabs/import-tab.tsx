@@ -1,6 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+type Tenant = {
+  id: string;
+  name: string;
+  config?: {
+    has_blocks?: boolean;
+    has_basement?: boolean;
+    basements?: string[];
+  } | null;
+};
+
+type Block = { id: string; name: string; code: string | null };
 
 type ImportResult = {
   inserted: number;
@@ -9,20 +21,90 @@ type ImportResult = {
   errors: { row: number; reason: string }[];
 };
 
-export function ImportTab({
-  tenantId,
-  hasBlocks,
-  hasBasement,
-}: {
-  tenantId: string;
-  hasBlocks?: boolean;
-  hasBasement?: boolean;
-}) {
+export function ImportTab({ tenant }: { tenant: Tenant }) {
+  const tenantId = tenant.id;
+  const config = tenant.config ?? {};
+  const hasBlocks = !!config.has_blocks;
+  const hasBasement = !!config.has_basement;
+  const basements = config.basements ?? [];
+
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [type, setType] = useState<"apartments" | "spots">("apartments");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/admin/tenants/${tenantId}/blocks`)
+      .then((r) => r.json())
+      .then((data) => setBlocks(Array.isArray(data) ? data : []))
+      .catch(() => setBlocks([]));
+  }, [tenantId]);
+
+  function downloadTemplateSpots() {
+    const headers = [
+      "numero",
+      ...(hasBlocks ? ["bloco"] : []),
+      ...(hasBasement ? basements : []),
+      "Simples",
+      "Dupla",
+      "Normal",
+      "PNE",
+      "Idoso",
+      "Visitante",
+    ];
+    const example = [
+      "V01",
+      ...(hasBlocks ? [blocks[0]?.name ?? "Bloco A"] : []),
+      ...(hasBasement ? basements.map((_, i) => (i === 0 ? "SIM" : "NÃO")) : []),
+      "SIM",
+      "NÃO",
+      "SIM",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+    ];
+    const csv = [headers.join(","), example.join(",")].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "modelo-vagas.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadTemplateApartments() {
+    const headers = [
+      "numero",
+      ...(hasBlocks ? ["bloco"] : []),
+      "Simples",
+      "Dupla",
+      "Duas simples",
+      "Moto",
+      ...(hasBasement ? basements.map((b) => `Pode ${b}`) : []),
+      ...(hasBlocks ? blocks.map((b) => `Pode ${b.name}`) : []),
+    ];
+    const example = [
+      "101",
+      ...(hasBlocks ? [blocks[0]?.name ?? "Bloco A"] : []),
+      "SIM",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      ...(hasBasement ? basements.map(() => "SIM") : []),
+      ...(hasBlocks ? blocks.map(() => "SIM") : []),
+    ];
+    const csv = [headers.join(","), example.join(",")].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "modelo-apartamentos.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,33 +144,38 @@ export function ImportTab({
       <div>
         <h3 className="font-medium text-[#250E62] mb-2">Importar dados</h3>
         <p className="text-sm text-[#5b4d7a] mb-2">
-          Envie um arquivo CSV ou Excel. Colunas esperadas:
+          A planilha se adapta à configuração do condomínio. Use <strong>SIM</strong> ou <strong>NÃO</strong> nas colunas indicadas (aceita também YES/NO, S/N, 1/0). Baixe o modelo, preencha e importe.
         </p>
         <p className="text-sm text-[#5b4d7a] mb-4">
-          <a
-            href={type === "apartments" ? "/templates/modelo-apartamentos.csv" : "/templates/modelo-vagas.csv"}
-            download
+          <button
+            type="button"
+            onClick={type === "apartments" ? downloadTemplateApartments : downloadTemplateSpots}
             className="font-medium text-[#5936CC] hover:text-[#250E62] underline"
           >
-            Baixar planilha modelo
-          </a>
-          {" "}— preencha com seus dados e importe.
+            Baixar planilha modelo ({type === "apartments" ? "apartamentos" : "vagas"})
+          </button>
         </p>
         {type === "apartments" ? (
-          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
+          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4 space-y-1">
             <li><strong>numero</strong> — número do apartamento (obrigatório)</li>
-            <li><strong>bloco</strong> — {hasBlocks ? "bloco a que o apartamento pertence." : "opcional; bloco a que o apartamento pertence."} ID do bloco (aba Blocos).</li>
-            <li><strong>direitos</strong> — um ou mais: Simples, Dupla, Duas simples, Carro, Moto (separados por vírgula)</li>
-            <li><strong>localização permitida</strong> — opcional; localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Várias separadas por vírgula. Vazio = qualquer.</li>
-            <li><strong>blocos permitidos</strong> — opcional; blocos em que o apartamento pode ser sorteado. IDs separados por vírgula. Vazio = qualquer.</li>
+            {hasBlocks && <li><strong>bloco</strong> — nome ou código do bloco ao qual o apartamento pertence</li>}
+            <li><strong>Simples, Dupla, Duas simples, Moto</strong> — use SIM em pelo menos um (direitos do apartamento)</li>
+            {hasBasement && basements.length > 0 && (
+              <li><strong>Pode [local]</strong> — SIM/NÃO para cada localização em que o apartamento pode concorrer ({basements.join(", ")})</li>
+            )}
+            {hasBlocks && blocks.length > 0 && (
+              <li><strong>Pode [bloco]</strong> — SIM/NÃO para cada bloco em que pode ser sorteado</li>
+            )}
           </ul>
         ) : (
-          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
+          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4 space-y-1">
             <li><strong>numero</strong> — número da vaga (obrigatório)</li>
-            <li><strong>tipo</strong> — Simples ou Dupla</li>
-            <li><strong>especial</strong> — Normal, PNE, Idoso ou Visitante</li>
-            <li><strong>localização</strong> — {hasBasement ? "(ex.: Térreo, Subsolo 1)." : "opcional (ex.: Térreo, Subsolo 1). Vazio = qualquer."}</li>
-            <li><strong>bloco</strong> — {hasBlocks ? "bloco da vaga." : "opcional; bloco da vaga."} ID do bloco (aba Blocos).</li>
+            {hasBlocks && <li><strong>bloco</strong> — nome ou código do bloco da vaga</li>}
+            {hasBasement && basements.length > 0 && (
+              <li><strong>Localização</strong> — uma coluna por local ({basements.join(", ")}): use SIM na localização da vaga e NÃO nas demais</li>
+            )}
+            <li><strong>Simples, Dupla</strong> — use SIM em exatamente um (tipo da vaga)</li>
+            <li><strong>Normal, PNE, Idoso, Visitante</strong> — use SIM em exatamente um (condição especial)</li>
           </ul>
         )}
       </div>

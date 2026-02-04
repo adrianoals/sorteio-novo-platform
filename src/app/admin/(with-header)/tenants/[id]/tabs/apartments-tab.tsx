@@ -16,7 +16,6 @@ const RIGHTS_OPTIONS = [
   { value: "simple", label: "Simples" },
   { value: "double", label: "Dupla" },
   { value: "two_simple", label: "Duas simples" },
-  { value: "car", label: "Carro" },
   { value: "moto", label: "Moto" },
 ];
 
@@ -142,10 +141,12 @@ export function ApartmentsTab({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        credentials: "include",
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Erro ao salvar.");
+        const msg = data.error ?? (data.details ? JSON.stringify(data.details) : null) ?? "Erro ao salvar.";
+        setError(typeof msg === "string" ? msg : "Erro ao salvar.");
         setSaving(false);
         return;
       }
@@ -195,6 +196,9 @@ export function ApartmentsTab({
           onSubmit={submit}
           className="rounded-lg border border-[#e2deeb] bg-[#faf9ff] p-4 space-y-3"
         >
+          <h4 className="font-medium text-[#250E62]">
+            {editingId ? `Editar apartamento — ${formNumber || "…"}` : "Novo apartamento"}
+          </h4>
           <div>
             <label className="block text-sm font-medium text-[#3F228D] mb-1">
               Número
@@ -372,9 +376,12 @@ export function ApartmentsTab({
               </tr>
             ) : (
               apartments.map((a) => (
-                <tr key={a.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
+                <tr
+                  key={a.id}
+                  className={`border-b border-[#e2deeb] hover:bg-[#faf9ff] ${editingId === a.id ? "bg-[#e8e4f3] border-l-4 border-l-[#5936CC]" : ""}`}
+                >
                   <td className="px-4 py-3">{a.number}</td>
-                  <td className="px-4 py-3">{(Array.isArray(a.rights) ? a.rights : [a.rights]).map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? r).join(", ")}</td>
+                  <td className="px-4 py-3">{(Array.isArray(a.rights) ? a.rights : [a.rights]).map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? (r === "car" ? "Simples" : r)).join(", ")}</td>
                   {hasBlocks && (
                     <td className="px-4 py-3">{blockName(a.blockId)}</td>
                   )}

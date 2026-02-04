@@ -16,7 +16,10 @@ export const createApartmentSchema = z.object({
 
 export const updateApartmentSchema = z.object({
   number: z.string().min(1).max(50).optional(),
-  blockId: z.string().uuid().optional().nullable(),
+  blockId: z
+    .union([z.string().uuid(), z.literal(""), z.null()])
+    .optional()
+    .transform((v) => (v === "" ? null : v)),
   rights: rightsArraySchema.optional(),
   allowedSubsolos: z.array(z.string()).optional().nullable(),
   allowedBlocks: z.array(z.string().uuid()).optional().nullable(),

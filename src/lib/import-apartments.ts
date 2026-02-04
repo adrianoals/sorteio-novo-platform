@@ -1,4 +1,13 @@
 import { parse } from "csv-parse/sync";
+import { getRawKey, isSim } from "./import-sim-nao";
+
+export type ApartmentConfig = {
+  has_blocks?: boolean;
+  has_basement?: boolean;
+  basements?: string[];
+};
+
+export type BlockInfo = { id: string; name: string; code: string | null };
 
 const RIGHTS = new Set<string>(["simple", "double", "two_simple", "car", "moto"]);
 
@@ -58,6 +67,95 @@ export interface ApartmentRow {
   allowed_blocks?: string[];
 }
 
+/** Converte linha bruta (planilha adaptativa) em ApartmentRow. Aceita SIM/NÃO ou formato legado. */
+export function mapRawRowToApartmentRow(
+  raw: Record<string, string | undefined>,
+  config: ApartmentConfig,
+  blocks: BlockInfo[]
+): ApartmentRow {
+  const get = (...args: string[]) => getRawKey(raw as Record<string, string | undefined>, ...args);
+  const numero = get("numero", "number", "Número") || "";
+  const blocoRaw = get("bloco", "block", "block_id");
+  const hasBlocks = !!config.has_blocks;
+  const hasBasement = !!config.has_basement;
+  const basements = config.basements ?? [];
+
+  const simplesVal = get("Simples", "simples");
+  const duplaVal = get("Dupla", "dupla");
+  const duasSimplesVal = get("Duas simples", "duas simples");
+  const motoVal = get("Moto", "moto");
+
+  const usaAdaptativo =
+    simplesVal !== "" || duplaVal !== "" || duasSimplesVal !== "" || motoVal !== "";
+
+  let rights: string[];
+  let allowed_subsolos: string[] | undefined;
+  let allowed_blocks: string[] | undefined;
+
+  if (usaAdaptativo) {
+    rights = [];
+    if (isSim(simplesVal)) rights.push("simple");
+    if (isSim(duplaVal)) rights.push("double");
+    if (isSim(duasSimplesVal)) rights.push("two_simple");
+    if (isSim(get("Carro", "carro"))) rights.push("car"); // legado: planilhas antigas com Carro
+    if (isSim(motoVal)) rights.push("moto");
+    if (rights.length === 0) rights = ["simple"];
+
+    if (hasBasement && basements.length > 0) {
+      allowed_subsolos = basements.filter((b) => isSim(get(b)));
+    }
+    if (hasBlocks && blocks.length > 0) {
+      allowed_blocks = blocks
+        .filter((b) => isSim(get("Pode " + b.name) || get(b.name)))
+        .map((b) => b.id);
+    }
+  } else {
+    const rawRights = get("direitos", "rights", "Direitos");
+    rights = parseRightsString(rawRights || "simple");
+    const rawLoc = get("localização permitida", "localizacao permitida", "localização", "localizacao");
+    allowed_subsolos = parseLocalizacoes(rawLoc);
+    const rawBlocos = get("blocos permitidos", "blocosPermitidos", "allowed_blocks");
+    allowed_blocks = parseIds(rawBlocos);
+  }
+
+  let block_id: string | undefined;
+  if (blocoRaw && blocks.length > 0) {
+    const blocoTrim = blocoRaw.trim();
+    const byId = blocks.find((b) => b.id === blocoTrim);
+    const byName = blocks.find((b) => b.name.trim().toLowerCase() === blocoTrim.toLowerCase());
+    const byCode = blocks.find((b) => b.code && b.code.trim().toLowerCase() === blocoTrim.toLowerCase());
+    block_id = (byId ?? byName ?? byCode)?.id;
+  } else if (blocoRaw) {
+    block_id = blocoRaw;
+  }
+
+  return {
+    number: numero,
+    block_id,
+    rights,
+    allowed_subsolos: allowed_subsolos?.length ? allowed_subsolos : undefined,
+    allowed_blocks: allowed_blocks?.length ? allowed_blocks : undefined,
+  };
+}
+
+/** Retorna linhas brutas da planilha (para uso com mapRawRowToApartmentRow). */
+export function parseApartmentCsvRaw(buffer: Buffer): Record<string, string>[] {
+  const text = buffer.toString("utf-8");
+  const rows = parse(text, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    relax_column_count: true,
+  }) as Record<string, string>[];
+  return rows.map((r) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(r)) {
+      out[k ?? ""] = v != null ? String(v).trim() : "";
+    }
+    return out;
+  });
+}
+
 export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
   const text = buffer.toString("utf-8");
   const rows = parse(text, {
@@ -114,6 +212,23 @@ export function validateApartmentRow(
     }
   }
   return { ok: true };
+}
+
+/** Retorna linhas brutas da planilha Excel (para uso com mapRawRowToApartmentRow). */
+export function parseApartmentXlsxRaw(buffer: Buffer): Record<string, string>[] {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const XLSX = require("xlsx");
+  const wb = XLSX.read(buffer, { type: "buffer" });
+  const first = wb.SheetNames[0];
+  const sheet = wb.Sheets[first];
+  const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
+  return data.map((r) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(r)) {
+      out[k ?? ""] = v != null ? String(v).trim() : "";
+    }
+    return out;
+  });
 }
 
 export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
