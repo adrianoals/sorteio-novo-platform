@@ -48,6 +48,9 @@ export function ApartmentsTab({
 
   const [deleteModalApartment, setDeleteModalApartment] = useState<Apartment | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const load = () => {
     Promise.all([
@@ -177,9 +180,54 @@ export function ApartmentsTab({
         closeDeleteModal();
         closeForm();
         load();
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(deleteModalApartment.id);
+          return next;
+        });
       }
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === apartments.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(apartments.map((a) => a.id)));
+  };
+
+  const openBulkDeleteModal = () => setBulkDeleteModalOpen(true);
+  const closeBulkDeleteModal = () => {
+    if (!bulkDeleting) setBulkDeleteModalOpen(false);
+  };
+
+  const confirmBulkRemove = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/admin/tenants/${tenantId}/apartments/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        )
+      );
+      setBulkDeleteModalOpen(false);
+      setSelectedIds(new Set());
+      load();
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -301,11 +349,22 @@ export function ApartmentsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-medium text-[#250E62]">Apartamentos</h3>
-        <button type="button" onClick={openCreate} className="rounded bg-[#250E62] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1e0b4f]">
-          Novo apartamento
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={openBulkDeleteModal}
+              className="rounded border border-red-600 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Remover selecionados ({selectedIds.size})
+            </button>
+          )}
+          <button type="button" onClick={openCreate} className="rounded bg-[#250E62] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1e0b4f]">
+            Novo apartamento
+          </button>
+        </div>
       </div>
 
       {/* Formulário inline só para criar; edição vai para modal */}
@@ -332,7 +391,45 @@ export function ApartmentsTab({
         </div>
       )}
 
-      {/* Modal de confirmação de exclusão */}
+      {/* Modal de confirmação de exclusão em massa */}
+      {bulkDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && closeBulkDeleteModal()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-delete-apartments-title"
+        >
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h4 id="bulk-delete-apartments-title" className="font-medium text-[#250E62] mb-2">
+              Remover apartamentos
+            </h4>
+            <p className="text-[#5b4d7a] mb-4">
+              Remover <strong>{selectedIds.size}</strong> apartamento(s) selecionado(s)? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={closeBulkDeleteModal}
+                disabled={bulkDeleting}
+                className="rounded border border-[#e2deeb] px-4 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff] disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmBulkRemove}
+                disabled={bulkDeleting}
+                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeleting ? "Removendo…" : "Remover todos"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão (um único) */}
       {deleteModalApartment && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -376,6 +473,15 @@ export function ApartmentsTab({
         <table className="w-full text-left text-sm">
           <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
             <tr>
+              <th className="w-10 px-2 py-3">
+                <input
+                  type="checkbox"
+                  checked={apartments.length > 0 && selectedIds.size === apartments.length}
+                  onChange={toggleSelectAll}
+                  aria-label="Selecionar todos"
+                  className="rounded border-[#e2deeb]"
+                />
+              </th>
               <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
               <th className="px-4 py-3 font-medium text-[#3F228D]">Direitos</th>
               {hasBlocks && <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>}
@@ -385,13 +491,22 @@ export function ApartmentsTab({
           <tbody>
             {apartments.length === 0 ? (
               <tr>
-                <td colSpan={hasBlocks ? 4 : 3} className="px-4 py-6 text-center text-[#5b4d7a]">
+                <td colSpan={hasBlocks ? 5 : 4} className="px-4 py-6 text-center text-[#5b4d7a]">
                   Nenhum apartamento.
                 </td>
               </tr>
             ) : (
               apartments.map((a) => (
                 <tr key={a.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
+                  <td className="w-10 px-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(a.id)}
+                      onChange={() => toggleSelect(a.id)}
+                      aria-label={`Selecionar apartamento ${a.number}`}
+                      className="rounded border-[#e2deeb]"
+                    />
+                  </td>
                   <td className="px-4 py-3">{a.number}</td>
                   <td className="px-4 py-3">
                     {(Array.isArray(a.rights) ? a.rights : [a.rights])

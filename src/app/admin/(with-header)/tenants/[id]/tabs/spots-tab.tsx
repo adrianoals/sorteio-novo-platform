@@ -56,6 +56,11 @@ export function SpotsTab({
   const [formSpecialType, setFormSpecialType] = useState("normal");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteModalSpot, setDeleteModalSpot] = useState<Spot | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const basements = config?.basements ?? [];
   const hasBasement = !!config?.has_basement;
@@ -146,15 +151,66 @@ export function SpotsTab({
     setSaving(false);
   };
 
-  const remove = async (spotId: string) => {
-    if (!confirm("Remover esta vaga?")) return;
-    const res = await fetch(
-      `/api/admin/tenants/${tenantId}/spots/${spotId}`,
-      { method: "DELETE" }
-    );
-    if (res.ok) {
-      closeForm();
+  const confirmRemove = async () => {
+    if (!deleteModalSpot) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/admin/tenants/${tenantId}/spots/${deleteModalSpot.id}`,
+        { method: "DELETE", credentials: "include" }
+      );
+      if (res.ok) {
+        setDeleteModalSpot(null);
+        closeForm();
+        load();
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(deleteModalSpot.id);
+          return next;
+        });
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === spots.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(spots.map((s) => s.id)));
+  };
+
+  const openBulkDeleteModal = () => setBulkDeleteModalOpen(true);
+  const closeBulkDeleteModal = () => {
+    if (!bulkDeleting) setBulkDeleteModalOpen(false);
+  };
+
+  const confirmBulkRemove = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/admin/tenants/${tenantId}/spots/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        )
+      );
+      setBulkDeleteModalOpen(false);
+      setSelectedIds(new Set());
       load();
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -191,18 +247,108 @@ export function SpotsTab({
 
   if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
 
+  const spotLabel = (s: Spot) => [s.number, hasBasement && s.basement ? s.basement : null, hasBlocks && s.blockId ? blockName(s.blockId) : null].filter(Boolean).join(" · ");
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-medium text-[#250E62]">Vagas</h3>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded bg-[#250E62] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1e0b4f]"
-        >
-          Nova vaga
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={openBulkDeleteModal}
+              className="rounded border border-red-600 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Remover selecionadas ({selectedIds.size})
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded bg-[#250E62] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1e0b4f]"
+          >
+            Nova vaga
+          </button>
+        </div>
       </div>
+
+      {/* Modal confirmação exclusão em massa */}
+      {bulkDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && closeBulkDeleteModal()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-delete-spots-title"
+        >
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h4 id="bulk-delete-spots-title" className="font-medium text-[#250E62] mb-2">
+              Remover vagas
+            </h4>
+            <p className="text-[#5b4d7a] mb-4">
+              Remover <strong>{selectedIds.size}</strong> vaga(s) selecionada(s)? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={closeBulkDeleteModal}
+                disabled={bulkDeleting}
+                className="rounded border border-[#e2deeb] px-4 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff] disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmBulkRemove}
+                disabled={bulkDeleting}
+                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeleting ? "Removendo…" : "Remover todas"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal confirmação exclusão (uma vaga) */}
+      {deleteModalSpot && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && setDeleteModalSpot(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-spot-title"
+        >
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h4 id="delete-spot-title" className="font-medium text-[#250E62] mb-2">
+              Remover vaga
+            </h4>
+            <p className="text-[#5b4d7a] mb-4">
+              Remover a vaga <strong>{deleteModalSpot.number}</strong>
+              {hasBasement && deleteModalSpot.basement && <> ({deleteModalSpot.basement})</>}
+              {hasBlocks && deleteModalSpot.blockId && <> — bloco {blockName(deleteModalSpot.blockId)}</>}? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteModalSpot(null)}
+                className="rounded border border-[#e2deeb] px-4 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                disabled={deleting}
+                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Removendo…" : "Remover"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form
@@ -324,6 +470,15 @@ export function SpotsTab({
         <table className="w-full text-left text-sm">
           <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
             <tr>
+              <th className="w-10 px-2 py-3">
+                <input
+                  type="checkbox"
+                  checked={spots.length > 0 && selectedIds.size === spots.length}
+                  onChange={toggleSelectAll}
+                  aria-label="Selecionar todas"
+                  className="rounded border-[#e2deeb]"
+                />
+              </th>
               <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
               {hasBasement && (
                 <th className="px-4 py-3 font-medium text-[#3F228D]">Localização</th>
@@ -340,13 +495,22 @@ export function SpotsTab({
           <tbody>
             {spots.length === 0 ? (
               <tr>
-                <td colSpan={hasBasement && hasBlocks ? 7 : hasBasement || hasBlocks ? 6 : 5} className="px-4 py-6 text-center text-[#5b4d7a]">
+                <td colSpan={hasBasement && hasBlocks ? 8 : hasBasement || hasBlocks ? 7 : 6} className="px-4 py-6 text-center text-[#5b4d7a]">
                   Nenhuma vaga.
                 </td>
               </tr>
             ) : (
               spots.map((s) => (
                 <tr key={s.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
+                  <td className="w-10 px-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                      aria-label={`Selecionar vaga ${s.number}`}
+                      className="rounded border-[#e2deeb]"
+                    />
+                  </td>
                   <td className="px-4 py-3">{s.number}</td>
                   {hasBasement && (
                     <td className="px-4 py-3">{s.basement ?? "—"}</td>
@@ -404,7 +568,7 @@ export function SpotsTab({
                     </button>
                     <button
                       type="button"
-                      onClick={() => remove(s.id)}
+                      onClick={() => setDeleteModalSpot(s)}
                       className="text-red-600 hover:text-red-800"
                     >
                       Remover
