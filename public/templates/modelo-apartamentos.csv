@@ -1,6 +1,6 @@
-numero,direitos,bloco
-101,Simples,
-102,Simples,
-201,Dupla,
-301,Duas simples,
-401,"Simples,Dupla",
+numero,direitos,localização,bloco
+101,Simples,,
+102,Simples,Subsolo 1,
+201,Dupla,Subsolo 1,
+301,Duas simples,"Subsolo 1, Subsolo 2",
+401,"Simples,Dupla",,

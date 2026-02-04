@@ -70,6 +70,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>numero</strong> — número do apartamento (obrigatório)</li>
             <li><strong>direitos</strong> — um ou mais: Simples, Dupla, Duas simples, Carro, Moto (separados por vírgula)</li>
+            <li><strong>localização</strong> — opcional; localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Várias separadas por vírgula. Vazio = qualquer.</li>
             <li><strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         ) : (

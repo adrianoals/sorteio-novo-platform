@@ -28,11 +28,22 @@ function parseRightsString(raw: string): string[] {
     .filter(Boolean);
 }
 
+function parseLocalizacoes(raw: string): string[] {
+  const s = raw.trim();
+  if (!s) return [];
+  return s
+    .split(/[,;]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export interface ApartmentRow {
   number: string;
   block_id?: string;
   /** Lista de direitos (ex.: simple, simple, double). Aceita coluna com valores separados por vírgula ou ponto-e-vírgula. */
   rights: string[];
+  /** Localizações em que o apartamento pode concorrer (ex.: Subsolo 1, Térreo). Vazio = qualquer. */
+  allowed_subsolos?: string[];
 }
 
 export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
@@ -46,10 +57,19 @@ export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
 
   return rows.map((r) => {
     const raw = r.rights ?? r.direitos ?? r["Direitos"] ?? "simple";
+    const rawLoc =
+      r.localização ??
+      r["localização"] ??
+      r.localizacoes ??
+      r.localizações ??
+      r.subsolos_permitidos ??
+      r.allowed_subsolos ??
+      "";
     return {
       number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
       block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
       rights: parseRightsString(raw),
+      allowed_subsolos: parseLocalizacoes(rawLoc),
     };
   });
 }
@@ -87,10 +107,20 @@ export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
     const num = String(r.number ?? r.numero ?? r["Número"] ?? "").trim();
     const block = String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim();
     const raw = String(r.rights ?? r.direitos ?? r["Direitos"] ?? "simple");
+    const rawLoc = String(
+      r.localização ??
+        r["localização"] ??
+        r.localizacoes ??
+        r.localizações ??
+        r.subsolos_permitidos ??
+        r.allowed_subsolos ??
+        ""
+    );
     return {
       number: num,
       block_id: block || undefined,
       rights: parseRightsString(raw),
+      allowed_subsolos: parseLocalizacoes(rawLoc),
     };
   });
 }
