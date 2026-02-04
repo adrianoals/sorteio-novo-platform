@@ -34,18 +34,18 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
     load();
   }, [tenantId]);
 
-  if (loading) return <p className="text-zinc-500">Carregando…</p>;
+  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
   if (error) return <p className="text-red-600">{error}</p>;
   if (!result) return null;
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <h3 className="font-medium text-zinc-800">Status e prontidão</h3>
+        <h3 className="font-medium text-[#250E62]">Status e prontidão</h3>
         <button
           type="button"
           onClick={load}
-          className="text-sm text-zinc-600 hover:text-zinc-800 underline"
+          className="text-sm text-[#5936CC] hover:text-[#250E62] underline"
         >
           Atualizar
         </button>
@@ -70,14 +70,14 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
       </div>
 
       {result.counts && (
-        <div className="rounded-lg border border-zinc-200 p-4">
-          <h4 className="font-medium text-zinc-800 mb-2">Resumo</h4>
-          <p className="text-sm text-zinc-600">
+        <div className="rounded-lg border border-[#e2deeb] p-4">
+          <h4 className="font-medium text-[#250E62] mb-2">Resumo</h4>
+          <p className="text-sm text-[#5b4d7a]">
             Apartamentos: <strong>{result.counts.apartments}</strong>
             {" "}· Vagas: <strong>{result.counts.spots}</strong>
           </p>
           {Object.keys(result.counts.apartmentsByRights).length > 0 && (
-            <p className="text-sm text-zinc-600 mt-1">
+            <p className="text-sm text-[#5b4d7a] mt-1">
               Por direitos:{" "}
               {Object.entries(result.counts.apartmentsByRights)
                 .map(([k, v]) => `${k}: ${v}`)
@@ -85,7 +85,7 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
             </p>
           )}
           {Object.keys(result.counts.spotsByType).length > 0 && (
-            <p className="text-sm text-zinc-600 mt-1">
+            <p className="text-sm text-[#5b4d7a] mt-1">
               Por tipo de vaga:{" "}
               {Object.entries(result.counts.spotsByType)
                 .map(([k, v]) => `${k}: ${v}`)

@@ -52,18 +52,18 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h3 className="font-medium text-zinc-800 mb-2">Importar dados</h3>
-        <p className="text-sm text-zinc-600 mb-4">
+        <h3 className="font-medium text-[#250E62] mb-2">Importar dados</h3>
+        <p className="text-sm text-[#5b4d7a] mb-4">
           Envie um arquivo CSV ou Excel. Colunas esperadas:
         </p>
         {type === "apartments" ? (
-          <ul className="text-sm text-zinc-600 list-disc list-inside mb-4">
+          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número do apartamento (obrigatório)</li>
             <li><strong>rights</strong> ou <strong>direitos</strong> — simple, double, two_simple, car, moto</li>
             <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional</li>
           </ul>
         ) : (
-          <ul className="text-sm text-zinc-600 list-disc list-inside mb-4">
+          <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número da vaga (obrigatório)</li>
             <li><strong>spot_type</strong> ou <strong>tipo</strong> — simple ou double</li>
             <li><strong>special_type</strong> ou <strong>especial</strong> — normal, pne, idoso, visitor</li>
@@ -75,7 +75,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1">
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">
             Tipo de importação
           </label>
           <select
@@ -85,14 +85,14 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
               setResult(null);
               setError(null);
             }}
-            className="rounded border border-zinc-300 px-3 py-2"
+            className="rounded border border-[#e2deeb] px-3 py-2"
           >
             <option value="apartments">Apartamentos</option>
             <option value="spots">Vagas</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1">
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">
             Arquivo (CSV ou Excel)
           </label>
           <input
@@ -103,7 +103,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
               setResult(null);
               setError(null);
             }}
-            className="block w-full text-sm text-zinc-600 file:mr-4 file:rounded file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-zinc-800"
+            className="block w-full text-sm text-[#5b4d7a] file:mr-4 file:rounded file:border-0 file:bg-[#faf9ff] file:px-4 file:py-2 file:text-[#1a0d2e]"
           />
         </div>
         {error && (
@@ -114,15 +114,15 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
         <button
           type="submit"
           disabled={loading || !file}
-          className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] disabled:opacity-50"
         >
           {loading ? "Importando…" : "Importar"}
         </button>
       </form>
 
       {result && (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 space-y-2">
-          <h4 className="font-medium text-zinc-800">Resultado</h4>
+        <div className="rounded-lg border border-[#e2deeb] bg-[#faf9ff] p-4 space-y-2">
+          <h4 className="font-medium text-[#250E62]">Resultado</h4>
           <p className="text-sm">
             Inseridos: <strong>{result.inserted}</strong>
             {result.updated > 0 && (
@@ -132,8 +132,8 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
           </p>
           {result.errors.length > 0 && (
             <div className="mt-2">
-              <p className="text-sm font-medium text-zinc-700 mb-1">Erros por linha:</p>
-              <ul className="text-sm text-zinc-600 list-disc list-inside max-h-40 overflow-y-auto">
+              <p className="text-sm font-medium text-[#3F228D] mb-1">Erros por linha:</p>
+              <ul className="text-sm text-[#5b4d7a] list-disc list-inside max-h-40 overflow-y-auto">
                 {result.errors.slice(0, 50).map((e, i) => (
                   <li key={i}>
                     Linha {e.row}: {e.reason}

@@ -30,7 +30,7 @@ export function TenantList() {
   }, [search, statusFilter]);
 
   if (loading) {
-    return <p className="text-zinc-500">Carregando…</p>;
+    return <p className="text-[#5b4d7a]">Carregando…</p>;
   }
 
   return (
@@ -41,46 +41,46 @@ export function TenantList() {
           placeholder="Buscar por nome ou slug"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded border border-zinc-300 px-3 py-2 text-sm"
+          className="rounded border border-[#e2deeb] bg-white px-3 py-2 text-sm text-[#1a0d2e] placeholder:text-[#9b8fb5] focus:border-[#5936CC] focus:outline-none focus:ring-1 focus:ring-[#5936CC]"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded border border-zinc-300 px-3 py-2 text-sm"
+          className="rounded border border-[#e2deeb] bg-white px-3 py-2 text-sm text-[#1a0d2e] focus:border-[#5936CC] focus:outline-none"
         >
           <option value="">Todos</option>
           <option value="active">Ativo</option>
           <option value="inactive">Inativo</option>
         </select>
       </div>
-      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-[#e2deeb] bg-white overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50 border-b border-zinc-200">
+          <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
             <tr>
-              <th className="px-4 py-3 font-medium text-zinc-700">Nome</th>
-              <th className="px-4 py-3 font-medium text-zinc-700">Slug</th>
-              <th className="px-4 py-3 font-medium text-zinc-700">Status</th>
-              <th className="px-4 py-3 font-medium text-zinc-700" />
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Nome</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Slug</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Status</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]" />
             </tr>
           </thead>
           <tbody>
             {tenants.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-zinc-500">
+                <td colSpan={4} className="px-4 py-6 text-center text-[#5b4d7a]">
                   Nenhum condomínio encontrado.
                 </td>
               </tr>
             ) : (
               tenants.map((t) => (
-                <tr key={t.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-800">{t.name}</td>
-                  <td className="px-4 py-3 text-zinc-600">{t.slug}</td>
+                <tr key={t.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
+                  <td className="px-4 py-3 font-medium text-[#1a0d2e]">{t.name}</td>
+                  <td className="px-4 py-3 text-[#5b4d7a]">{t.slug}</td>
                   <td className="px-4 py-3">
                     <span
                       className={
                         t.status === "active"
                           ? "text-emerald-600"
-                          : "text-zinc-500"
+                          : "text-[#5b4d7a]"
                       }
                     >
                       {t.status === "active" ? "Ativo" : "Inativo"}
@@ -89,7 +89,7 @@ export function TenantList() {
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/tenants/${t.id}`}
-                      className="text-zinc-600 hover:text-zinc-800 underline"
+                      className="font-medium text-[#5936CC] hover:text-[#250E62]"
                     >
                       Ver
                     </Link>

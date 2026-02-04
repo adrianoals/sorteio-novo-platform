@@ -138,16 +138,16 @@ export function SpotsTab({
     return b ? b.name : blockId;
   };
 
-  if (loading) return <p className="text-zinc-500">Carregando…</p>;
+  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-zinc-800">Vagas</h3>
+        <h3 className="font-medium text-[#250E62]">Vagas</h3>
         <button
           type="button"
           onClick={openCreate}
-          className="rounded bg-zinc-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
+          className="rounded bg-[#250E62] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1e0b4f]"
         >
           Nova vaga
         </button>
@@ -156,10 +156,10 @@ export function SpotsTab({
       {showForm && (
         <form
           onSubmit={submit}
-          className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 space-y-3"
+          className="rounded-lg border border-[#e2deeb] bg-[#faf9ff] p-4 space-y-3"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-[#3F228D] mb-1">
               Número
             </label>
             <input
@@ -167,19 +167,19 @@ export function SpotsTab({
               value={formNumber}
               onChange={(e) => setFormNumber(e.target.value)}
               required
-              className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+              className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
             />
           </div>
           {hasBasement && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-[#3F228D] mb-1">
                 Subsolo
               </label>
               {basements.length ? (
                 <select
                   value={formBasement}
                   onChange={(e) => setFormBasement(e.target.value)}
-                  className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+                  className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
                 >
                   {basements.map((b) => (
                     <option key={b} value={b}>
@@ -193,20 +193,20 @@ export function SpotsTab({
                   value={formBasement}
                   onChange={(e) => setFormBasement(e.target.value)}
                   placeholder="Ex: Subsolo 1"
-                  className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+                  className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
                 />
               )}
             </div>
           )}
           {hasBlocks && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-[#3F228D] mb-1">
                 Bloco
               </label>
               <select
                 value={formBlockId}
                 onChange={(e) => setFormBlockId(e.target.value)}
-                className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+                className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
               >
                 <option value="">—</option>
                 {blocks.map((b) => (
@@ -218,26 +218,26 @@ export function SpotsTab({
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-[#3F228D] mb-1">
               Tipo
             </label>
             <select
               value={formSpotType}
               onChange={(e) => setFormSpotType(e.target.value as "simple" | "double")}
-              className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+              className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
             >
               <option value="simple">Simples</option>
               <option value="double">Dupla</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-[#3F228D] mb-1">
               Especial
             </label>
             <select
               value={formSpecialType}
               onChange={(e) => setFormSpecialType(e.target.value)}
-              className="w-full max-w-xs rounded border border-zinc-300 px-3 py-2"
+              className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
             >
               <option value="normal">Normal</option>
               <option value="pne">PNE</option>
@@ -254,14 +254,14 @@ export function SpotsTab({
             <button
               type="submit"
               disabled={saving}
-              className="rounded bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700 disabled:opacity-50"
+              className="rounded bg-[#250E62] px-4 py-2 text-sm text-white hover:bg-[#1e0b4f] disabled:opacity-50"
             >
               {saving ? "Salvando…" : editingId ? "Salvar" : "Criar"}
             </button>
             <button
               type="button"
               onClick={closeForm}
-              className="rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+              className="rounded border border-[#e2deeb] px-4 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff]"
             >
               Cancelar
             </button>
@@ -269,32 +269,32 @@ export function SpotsTab({
         </form>
       )}
 
-      <div className="rounded-lg border border-zinc-200 overflow-hidden">
+      <div className="rounded-lg border border-[#e2deeb] overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50 border-b border-zinc-200">
+          <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
             <tr>
-              <th className="px-4 py-3 font-medium text-zinc-700">Número</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Número</th>
               {hasBasement && (
-                <th className="px-4 py-3 font-medium text-zinc-700">Subsolo</th>
+                <th className="px-4 py-3 font-medium text-[#3F228D]">Subsolo</th>
               )}
-              <th className="px-4 py-3 font-medium text-zinc-700">Tipo</th>
-              <th className="px-4 py-3 font-medium text-zinc-700">Especial</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Tipo</th>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Especial</th>
               {hasBlocks && (
-                <th className="px-4 py-3 font-medium text-zinc-700">Bloco</th>
+                <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>
               )}
-              <th className="px-4 py-3 font-medium text-zinc-700" />
+              <th className="px-4 py-3 font-medium text-[#3F228D]" />
             </tr>
           </thead>
           <tbody>
             {spots.length === 0 ? (
               <tr>
-                <td colSpan={hasBasement && hasBlocks ? 6 : hasBasement || hasBlocks ? 5 : 4} className="px-4 py-6 text-center text-zinc-500">
+                <td colSpan={hasBasement && hasBlocks ? 6 : hasBasement || hasBlocks ? 5 : 4} className="px-4 py-6 text-center text-[#5b4d7a]">
                   Nenhuma vaga.
                 </td>
               </tr>
             ) : (
               spots.map((s) => (
-                <tr key={s.id} className="border-b border-zinc-100 hover:bg-zinc-50">
+                <tr key={s.id} className="border-b border-[#e2deeb] hover:bg-[#faf9ff]">
                   <td className="px-4 py-3">{s.number}</td>
                   {hasBasement && (
                     <td className="px-4 py-3">{s.basement ?? "—"}</td>
@@ -308,7 +308,7 @@ export function SpotsTab({
                     <button
                       type="button"
                       onClick={() => openEdit(s)}
-                      className="text-zinc-600 hover:text-zinc-800 mr-3"
+                      className="text-[#5936CC] hover:text-[#250E62] mr-3"
                     >
                       Editar
                     </button>

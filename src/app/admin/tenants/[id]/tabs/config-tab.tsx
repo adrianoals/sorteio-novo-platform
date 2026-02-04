@@ -81,37 +81,37 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1">Nome</label>
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">Nome</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-3 py-2"
+            className="w-full rounded border border-[#e2deeb] px-3 py-2"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1">Slug</label>
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">Slug</label>
           <input
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-3 py-2"
+            className="w-full rounded border border-[#e2deeb] px-3 py-2"
           />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+        <label className="block text-sm font-medium text-[#3F228D] mb-1">Status</label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="rounded border border-zinc-300 px-3 py-2"
+          className="rounded border border-[#e2deeb] px-3 py-2"
         >
           <option value="active">Ativo</option>
           <option value="inactive">Inativo</option>
         </select>
       </div>
-      <div className="space-y-4 border-t border-zinc-200 pt-6">
-        <h3 className="font-medium text-zinc-800">Configuração</h3>
+      <div className="space-y-4 border-t border-[#e2deeb] pt-6">
+        <h3 className="font-medium text-[#250E62]">Configuração</h3>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -130,7 +130,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
         </label>
         {hasBasement && (
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-[#3F228D] mb-1">
               Subsolos
             </label>
             <div className="space-y-2">
@@ -141,12 +141,12 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
                     value={b}
                     onChange={(e) => setBasementAt(i, e.target.value)}
                     placeholder="Ex: Subsolo 1"
-                    className="flex-1 rounded border border-zinc-300 px-3 py-2"
+                    className="flex-1 rounded border border-[#e2deeb] px-3 py-2"
                   />
                   <button
                     type="button"
                     onClick={() => removeBasement(i)}
-                    className="text-zinc-500 hover:text-zinc-700"
+                    className="text-[#5b4d7a] hover:text-[#3F228D]"
                   >
                     Remover
                   </button>
@@ -155,7 +155,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
               <button
                 type="button"
                 onClick={addBasement}
-                className="text-sm text-zinc-600 hover:text-zinc-800"
+                className="text-sm text-[#5936CC] hover:text-[#250E62]"
               >
                 + Adicionar subsolo
               </button>
@@ -163,7 +163,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-2">
+          <label className="block text-sm font-medium text-[#3F228D] mb-2">
             Recursos habilitados
           </label>
           <label className="flex items-center gap-2">
@@ -184,13 +184,13 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
           </label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1">
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">
             Tipo de sorteio pretendido
           </label>
           <select
             value={intendedDrawType}
             onChange={(e) => setIntendedDrawType(e.target.value)}
-            className="rounded border border-zinc-300 px-3 py-2"
+            className="rounded border border-[#e2deeb] px-3 py-2"
           >
             <option value="S1">S1</option>
             <option value="S2">S2</option>
@@ -211,7 +211,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
       <button
         type="submit"
         disabled={saving}
-        className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+        className="rounded bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] disabled:opacity-50"
       >
         {saving ? "Salvando…" : "Salvar"}
       </button>

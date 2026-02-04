@@ -37,7 +37,7 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
 
   return (
     <div>
-      <div className="border-b border-zinc-200">
+      <div className="border-b border-[#e2deeb]">
         <nav className="flex gap-1" aria-label="Abas">
           {TABS.map((tab) => {
             const showBlocks = tab.id !== "blocks" || tenant.config?.has_blocks;
@@ -49,8 +49,8 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
                 onClick={() => setActive(tab.id)}
                 className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                   active === tab.id
-                    ? "border-zinc-800 text-zinc-800"
-                    : "border-transparent text-zinc-500 hover:text-zinc-700"
+                    ? "border-[#5936CC] text-[#250E62]"
+                    : "border-transparent text-[#5b4d7a] hover:text-[#3F228D]"
                 }`}
               >
                 {tab.label}

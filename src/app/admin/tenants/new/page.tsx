@@ -51,17 +51,17 @@ export default function NewTenantPage() {
       <div className="mb-6">
         <Link
           href="/admin"
-          className="text-sm text-zinc-600 hover:text-zinc-800"
+          className="text-sm font-medium text-[#5936CC] hover:text-[#250E62]"
         >
           ← Voltar
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold text-zinc-800 mb-6">
+      <h1 className="text-2xl font-bold text-[#250E62] mb-6">
         Novo condomínio
       </h1>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-zinc-700 mb-1">
+          <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider text-[#3F228D] mb-1">
             Nome
           </label>
           <input
@@ -71,11 +71,11 @@ export default function NewTenantPage() {
             onChange={(e) => setName(e.target.value)}
             onBlur={handleSlugFromName}
             required
-            className="w-full rounded border border-zinc-300 px-3 py-2"
+            className="w-full rounded border border-[#e2deeb] bg-white px-3 py-2 text-[#1a0d2e] focus:border-[#5936CC] focus:outline-none focus:ring-1 focus:ring-[#5936CC]"
           />
         </div>
         <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-zinc-700 mb-1">
+          <label htmlFor="slug" className="block text-xs font-semibold uppercase tracking-wider text-[#3F228D] mb-1">
             Slug
           </label>
           <input
@@ -85,9 +85,9 @@ export default function NewTenantPage() {
             onChange={(e) => setSlug(e.target.value)}
             placeholder="ex: condominio-teste"
             required
-            className="w-full rounded border border-zinc-300 px-3 py-2"
+            className="w-full rounded border border-[#e2deeb] bg-white px-3 py-2 text-[#1a0d2e] placeholder:text-[#9b8fb5] focus:border-[#5936CC] focus:outline-none focus:ring-1 focus:ring-[#5936CC]"
           />
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-[#5b4d7a]">
             Minúsculas, números e hífens. Único no sistema.
           </p>
         </div>
@@ -100,13 +100,13 @@ export default function NewTenantPage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+            className="rounded bg-[#250E62] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e0b4f] disabled:opacity-50 transition-colors"
           >
             {loading ? "Criando…" : "Criar"}
           </button>
           <Link
             href="/admin"
-            className="rounded border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="rounded border border-[#e2deeb] px-4 py-2 text-sm font-medium text-[#3F228D] hover:bg-[#faf9ff] transition-colors"
           >
             Cancelar
           </Link>

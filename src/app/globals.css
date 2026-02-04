@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
+/* Sorteio Novo — tema (docs/theme.md) */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a0d2e;
+  --purple-hero: #5936cc;
+  --purple-medium: #3f228d;
+  --purple-dark: #250e62;
+  --purple-dark-hover: #1e0b4f;
+  --purple-deep: #1a0d2e;
+  --purple-accent: #7c9eff;
+  --purple-label: #3f228d;
+  --lavanda: #5b4d7a;
+  --border-input: #e2deeb;
+  --border-input-hover: #c4b8e0;
+  --placeholder: #9b8fb5;
+  --card-bg: #faf9ff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-outfit);
   --font-mono: var(--font-geist-mono);
+  --color-purple-hero: var(--purple-hero);
+  --color-purple-medium: var(--purple-medium);
+  --color-purple-dark: var(--purple-dark);
+  --color-purple-deep: var(--purple-deep);
+  --color-purple-accent: var(--purple-accent);
+  --color-card: var(--card-bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-outfit), sans-serif;
 }
