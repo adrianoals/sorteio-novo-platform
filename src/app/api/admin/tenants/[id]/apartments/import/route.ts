@@ -96,7 +96,7 @@ export async function POST(
       tenantId,
       number: row.number,
       blockId,
-      rights: row.rights as "simple" | "double" | "two_simple" | "car" | "moto",
+      rights: row.rights as ("simple" | "double" | "two_simple" | "car" | "moto")[],
     });
     inserted++;
   }

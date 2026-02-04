@@ -66,7 +66,7 @@ export async function POST(
     );
   }
 
-  const { number, blockId, rights, attributes } = parsed.data;
+  const { number, blockId, rights, allowedSubsolos, allowedBlocks, attributes } = parsed.data;
   const dupCondition = blockId
     ? and(
         eq(apartments.tenantId, tenantId),
@@ -96,7 +96,9 @@ export async function POST(
       tenantId,
       number,
       blockId: blockId ?? null,
-      rights,
+      rights: rights ?? [],
+      allowedSubsolos: allowedSubsolos ?? null,
+      allowedBlocks: allowedBlocks ?? null,
       attributes: attributes ?? null,
     })
     .returning();

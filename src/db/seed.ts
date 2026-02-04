@@ -63,9 +63,9 @@ async function seed() {
 
   if (created) {
     await db.insert(apartments).values([
-      { tenantId, number: "101", rights: "simple" },
-      { tenantId, number: "102", rights: "simple" },
-      { tenantId, number: "201", rights: "double" },
+      { tenantId, number: "101", rights: ["simple"] },
+      { tenantId, number: "102", rights: ["simple"] },
+      { tenantId, number: "201", rights: ["double"] },
     ]);
     await db.insert(parkingSpots).values([
       { tenantId, number: "Vaga 01", basement: "Subsolo 1", spotType: "simple" },

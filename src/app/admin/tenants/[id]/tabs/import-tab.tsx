@@ -69,7 +69,7 @@ export function ImportTab({ tenantId }: { tenantId: string }) {
         {type === "apartments" ? (
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4">
             <li><strong>number</strong> ou <strong>numero</strong> — número do apartamento (obrigatório)</li>
-            <li><strong>rights</strong> ou <strong>direitos</strong> — simple, double, two_simple, car, moto</li>
+            <li><strong>rights</strong> ou <strong>direitos</strong> — um ou mais: simple, double, two_simple, car, moto (separados por vírgula para vários direitos)</li>
             <li><strong>block_id</strong> ou <strong>bloco</strong> — opcional; se usar blocos, preencha com o ID do bloco (aba Blocos)</li>
           </ul>
         ) : (

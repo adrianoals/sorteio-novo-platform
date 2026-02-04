@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
+type Apartment = { id: string; number: string; blockId: string | null };
 type Spot = {
   id: string;
   number: string;
@@ -10,6 +11,7 @@ type Spot = {
   spotType: string;
   specialType: string | null;
   blockId: string | null;
+  apartmentId: string | null;
 };
 
 export function SpotsTab({
@@ -23,7 +25,9 @@ export function SpotsTab({
 }) {
   const [spots, setSpots] = useState<Spot[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formNumber, setFormNumber] = useState("");
@@ -41,14 +45,17 @@ export function SpotsTab({
     Promise.all([
       fetch(`/api/admin/tenants/${tenantId}/spots`).then((r) => r.json()),
       hasBlocks ? fetch(`/api/admin/tenants/${tenantId}/blocks`).then((r) => r.json()) : Promise.resolve([]),
+      fetch(`/api/admin/tenants/${tenantId}/apartments`).then((r) => r.json()),
     ])
-      .then(([sps, blks]) => {
+      .then(([sps, blks, apts]) => {
         setSpots(Array.isArray(sps) ? sps : []);
         setBlocks(Array.isArray(blks) ? blks : []);
+        setApartments(Array.isArray(apts) ? apts : []);
       })
       .catch(() => {
         setSpots([]);
         setBlocks([]);
+        setApartments([]);
       })
       .finally(() => setLoading(false));
   };
@@ -136,6 +143,31 @@ export function SpotsTab({
     if (!blockId) return "—";
     const b = blocks.find((x) => x.id === blockId);
     return b ? b.name : blockId;
+  };
+
+  const apartmentName = (apartmentId: string | null) => {
+    if (!apartmentId) return "—";
+    const a = apartments.find((x) => x.id === apartmentId);
+    return a ? `Apt ${a.number}` : apartmentId.slice(0, 8);
+  };
+
+  const assignSpot = async (spotId: string, apartmentId: string | null) => {
+    setAssigningId(spotId);
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantId}/spots/${spotId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apartmentId }),
+      });
+      if (res.ok) load();
+      else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Erro ao atribuir.");
+      }
+    } catch {
+      alert("Erro de conexão.");
+    }
+    setAssigningId(null);
   };
 
   if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
@@ -282,13 +314,14 @@ export function SpotsTab({
               {hasBlocks && (
                 <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>
               )}
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Atribuído (travada)</th>
               <th className="px-4 py-3 font-medium text-[#3F228D]" />
             </tr>
           </thead>
           <tbody>
             {spots.length === 0 ? (
               <tr>
-                <td colSpan={hasBasement && hasBlocks ? 6 : hasBasement || hasBlocks ? 5 : 4} className="px-4 py-6 text-center text-[#5b4d7a]">
+                <td colSpan={hasBasement && hasBlocks ? 7 : hasBasement || hasBlocks ? 6 : 5} className="px-4 py-6 text-center text-[#5b4d7a]">
                   Nenhuma vaga.
                 </td>
               </tr>
@@ -304,6 +337,44 @@ export function SpotsTab({
                   {hasBlocks && (
                     <td className="px-4 py-3">{blockName(s.blockId)}</td>
                   )}
+                  <td className="px-4 py-3">
+                    {s.apartmentId ? (
+                      <span className="text-emerald-600 font-medium">{apartmentName(s.apartmentId)}</span>
+                    ) : (
+                      "—"
+                    )}
+                    {assigningId === s.id ? (
+                      <span className="ml-2 text-[#5b4d7a]">…</span>
+                    ) : (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <select
+                          className="rounded border border-[#e2deeb] px-2 py-0.5 text-xs"
+                          value=""
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v) assignSpot(s.id, v);
+                            e.target.value = "";
+                          }}
+                        >
+                          <option value="">Atribuir a…</option>
+                          {apartments.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              Apt {a.number}
+                            </option>
+                          ))}
+                        </select>
+                        {s.apartmentId && (
+                          <button
+                            type="button"
+                            onClick={() => assignSpot(s.id, null)}
+                            className="text-xs text-[#5b4d7a] hover:text-red-600"
+                          >
+                            Desatribuir
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"

@@ -1,18 +1,25 @@
 import { z } from "zod";
 
-const rightsEnum = ["simple", "double", "two_simple", "car", "moto"] as const;
+const rightEnum = z.enum(["simple", "double", "two_simple", "car", "moto"]);
+export const rightsArraySchema = z
+  .array(rightEnum)
+  .min(1, "Pelo menos um direito é obrigatório");
 
 export const createApartmentSchema = z.object({
   number: z.string().min(1, "Número é obrigatório").max(50),
   blockId: z.string().uuid().optional().nullable(),
-  rights: z.enum(rightsEnum),
+  rights: rightsArraySchema,
+  allowedSubsolos: z.array(z.string()).optional().nullable(),
+  allowedBlocks: z.array(z.string().uuid()).optional().nullable(),
   attributes: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export const updateApartmentSchema = z.object({
   number: z.string().min(1).max(50).optional(),
   blockId: z.string().uuid().optional().nullable(),
-  rights: z.enum(rightsEnum).optional(),
+  rights: rightsArraySchema.optional(),
+  allowedSubsolos: z.array(z.string()).optional().nullable(),
+  allowedBlocks: z.array(z.string().uuid()).optional().nullable(),
   attributes: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 

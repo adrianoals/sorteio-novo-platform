@@ -15,6 +15,8 @@ export const updateSpotSchema = z.object({
   basement: z.string().max(50).optional().nullable(),
   spotType: z.enum(["simple", "double"]).optional(),
   specialType: z.enum(["normal", "pne", "idoso", "visitor"]).optional().nullable(),
+  /** Atribuir (travar) a um apartamento ou desatribuir (null). */
+  apartmentId: z.string().uuid().optional().nullable(),
   attributes: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 

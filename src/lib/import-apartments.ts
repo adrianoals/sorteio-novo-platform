@@ -2,10 +2,20 @@ import { parse } from "csv-parse/sync";
 
 const RIGHTS = new Set<string>(["simple", "double", "two_simple", "car", "moto"]);
 
+function parseRightsString(raw: string): string[] {
+  const s = raw.trim().toLowerCase();
+  if (!s) return ["simple"];
+  return s
+    .split(/[,;]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export interface ApartmentRow {
   number: string;
   block_id?: string;
-  rights: string;
+  /** Lista de direitos (ex.: simple, simple, double). Aceita coluna com valores separados por vírgula ou ponto-e-vírgula. */
+  rights: string[];
 }
 
 export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
@@ -17,11 +27,14 @@ export function parseApartmentCsv(buffer: Buffer): ApartmentRow[] {
     relax_column_count: true,
   }) as Record<string, string>[];
 
-  return rows.map((r) => ({
-    number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
-    block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
-    rights: (r.rights ?? r.direitos ?? r["Direitos"] ?? "simple").trim().toLowerCase(),
-  }));
+  return rows.map((r) => {
+    const raw = r.rights ?? r.direitos ?? r["Direitos"] ?? "simple";
+    return {
+      number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
+      block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
+      rights: parseRightsString(raw),
+    };
+  });
 }
 
 export function validateApartmentRow(
@@ -34,8 +47,13 @@ export function validateApartmentRow(
   if (row.number.length > 50) {
     return { ok: false, row: rowIndex, reason: "Número muito longo" };
   }
-  if (!RIGHTS.has(row.rights)) {
-    return { ok: false, row: rowIndex, reason: `Direitos inválido: ${row.rights}. Use: simple, double, two_simple, car, moto` };
+  if (!row.rights.length) {
+    return { ok: false, row: rowIndex, reason: "Pelo menos um direito é obrigatório" };
+  }
+  for (const r of row.rights) {
+    if (!RIGHTS.has(r)) {
+      return { ok: false, row: rowIndex, reason: `Direitos inválido: ${r}. Use: simple, double, two_simple, car, moto` };
+    }
   }
   return { ok: true };
 }
@@ -51,11 +69,11 @@ export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
   return data.map((r) => {
     const num = String(r.number ?? r.numero ?? r["Número"] ?? "").trim();
     const block = String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim();
-    const rights = String(r.rights ?? r.direitos ?? r["Direitos"] ?? "simple").trim().toLowerCase();
+    const raw = String(r.rights ?? r.direitos ?? r["Direitos"] ?? "simple");
     return {
       number: num,
       block_id: block || undefined,
-      rights,
+      rights: parseRightsString(raw),
     };
   });
 }

@@ -25,14 +25,16 @@ export const blocksRelations = relations(blocks, ({ one, many }) => ({
   parkingSpots: many(parkingSpots),
 }));
 
-export const apartmentsRelations = relations(apartments, ({ one }) => ({
+export const apartmentsRelations = relations(apartments, ({ one, many }) => ({
   tenant: one(tenants),
   block: one(blocks),
+  assignedSpots: many(parkingSpots),
 }));
 
 export const parkingSpotsRelations = relations(parkingSpots, ({ one }) => ({
   tenant: one(tenants),
   block: one(blocks),
+  apartment: one(apartments),
 }));
 
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({

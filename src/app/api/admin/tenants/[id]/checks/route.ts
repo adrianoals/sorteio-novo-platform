@@ -121,22 +121,23 @@ export async function GET(
 
   const rightsCount: Record<string, number> = {};
   for (const a of aptList) {
-    rightsCount[a.rights] = (rightsCount[a.rights] ?? 0) + 1;
+    const list = (a.rights ?? []) as string[];
+    for (const r of list) {
+      rightsCount[r] = (rightsCount[r] ?? 0) + 1;
+    }
   }
   const spotTypeCount: Record<string, number> = {};
   for (const s of spotList) {
     spotTypeCount[s.spotType] = (spotTypeCount[s.spotType] ?? 0) + 1;
   }
 
-  const simpleRights = rightsCount["simple"] ?? 0;
-  const doubleRights = rightsCount["double"] ?? 0;
+  const simpleSlots = (rightsCount["simple"] ?? 0) + 2 * (rightsCount["two_simple"] ?? 0) + (rightsCount["double"] ?? 0);
   const simpleSpots = spotTypeCount["simple"] ?? 0;
   const doubleSpots = spotTypeCount["double"] ?? 0;
-  const totalNeededSimple = simpleRights + doubleRights;
-  const totalProvidedSimple = simpleSpots + doubleSpots;
-  if (totalApts > 0 && totalSpots > 0 && totalProvidedSimple < totalNeededSimple) {
+  const totalProvidedSlots = simpleSpots + doubleSpots;
+  if (totalApts > 0 && totalSpots > 0 && totalProvidedSlots < simpleSlots) {
     warnings.push(
-      `Direitos (simples+dupla) somam ${totalNeededSimple}, vagas (simples+dupla) somam ${totalProvidedSimple}. Pode faltar vaga para sorteio.`
+      `Direitos (slots) somam ${simpleSlots}, vagas (simples+dupla) somam ${totalProvidedSlots}. Pode faltar vaga para sorteio.`
     );
   }
 

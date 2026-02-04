@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { parkingSpots } from "@/db/schema";
+import { apartments, parkingSpots } from "@/db/schema";
 import { updateSpotSchema } from "@/lib/validations/spots";
 import { logAudit } from "@/lib/audit";
 import { and, eq, isNull, ne } from "drizzle-orm";
@@ -81,6 +81,40 @@ export async function PATCH(
   if (parsed.data.spotType !== undefined) update.spotType = parsed.data.spotType;
   if (parsed.data.specialType !== undefined) update.specialType = parsed.data.specialType ?? null;
   if (parsed.data.attributes !== undefined) update.attributes = parsed.data.attributes ?? null;
+
+  if (parsed.data.apartmentId !== undefined) {
+    const newApartmentId = parsed.data.apartmentId ?? null;
+    if (newApartmentId) {
+      const [apt] = await db
+        .select({ id: apartments.id, rights: apartments.rights })
+        .from(apartments)
+        .where(
+          and(
+            eq(apartments.id, newApartmentId),
+            eq(apartments.tenantId, tenantId)
+          )
+        )
+        .limit(1);
+      if (!apt) {
+        return NextResponse.json({ error: "Apartamento não encontrado." }, { status: 404 });
+      }
+      const rights = (apt.rights ?? []) as string[];
+      const spotType = parsed.data.spotType ?? existing.spotType;
+      const compatible =
+        spotType === "simple"
+          ? rights.some((r) => r === "simple" || r === "two_simple")
+          : spotType === "double"
+            ? rights.includes("double")
+            : false;
+      if (!compatible) {
+        return NextResponse.json(
+          { error: "O apartamento não tem direito a este tipo de vaga (simples/dupla)." },
+          { status: 400 }
+        );
+      }
+    }
+    update.apartmentId = newApartmentId;
+  }
 
   const [updated] = await db
     .update(parkingSpots)

@@ -76,6 +76,8 @@ export async function PATCH(
   if (parsed.data.number !== undefined) update.number = parsed.data.number;
   if (parsed.data.blockId !== undefined) update.blockId = parsed.data.blockId ?? null;
   if (parsed.data.rights !== undefined) update.rights = parsed.data.rights;
+  if (parsed.data.allowedSubsolos !== undefined) update.allowedSubsolos = parsed.data.allowedSubsolos ?? null;
+  if (parsed.data.allowedBlocks !== undefined) update.allowedBlocks = parsed.data.allowedBlocks ?? null;
   if (parsed.data.attributes !== undefined) update.attributes = parsed.data.attributes ?? null;
 
   const [updated] = await db
