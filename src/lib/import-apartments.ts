@@ -9,18 +9,17 @@ export type ApartmentConfig = {
 
 export type BlockInfo = { id: string; name: string; code: string | null };
 
-const RIGHTS = new Set<string>(["simple", "double", "two_simple", "car", "moto"]);
+const RIGHTS = new Set<string>(["simple", "double", "two_simple", "moto"]);
 
 const RIGHTS_PT: Record<string, string> = {
   simples: "simple",
   dupla: "double",
   "duas simples": "two_simple",
-  carro: "car",
+  carro: "simple",
   moto: "moto",
   simple: "simple",
   double: "double",
   two_simple: "two_simple",
-  car: "car",
 };
 
 function normalizeRight(token: string): string {
@@ -97,7 +96,6 @@ export function mapRawRowToApartmentRow(
     if (isSim(simplesVal)) rights.push("simple");
     if (isSim(duplaVal)) rights.push("double");
     if (isSim(duasSimplesVal)) rights.push("two_simple");
-    if (isSim(get("Carro", "carro"))) rights.push("car"); // legado: planilhas antigas com Carro
     if (isSim(motoVal)) rights.push("moto");
     if (rights.length === 0) rights = ["simple"];
 
@@ -208,7 +206,7 @@ export function validateApartmentRow(
   }
   for (const r of row.rights) {
     if (!RIGHTS.has(r)) {
-      return { ok: false, row: rowIndex, reason: `Direito inválido: ${r}. Use: Simples, Dupla, Duas simples, Carro, Moto` };
+      return { ok: false, row: rowIndex, reason: `Direito inválido: ${r}. Use: Simples, Dupla, Duas simples, Moto` };
     }
   }
   return { ok: true };

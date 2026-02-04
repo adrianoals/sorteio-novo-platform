@@ -23,7 +23,7 @@ export interface RunDrawS1Result {
 function expandRightsToSlotTypes(rights: ApartmentRightsList): DrawSlotType[] {
   const out: DrawSlotType[] = [];
   for (const r of rights) {
-    if (r === "simple" || r === "car" || r === "moto") out.push("simple");
+    if (r === "simple" || r === "moto" || r === "car") out.push("simple"); // "car" legado: tratar como simples
     else if (r === "double") out.push("double");
     else if (r === "two_simple") {
       out.push("simple");

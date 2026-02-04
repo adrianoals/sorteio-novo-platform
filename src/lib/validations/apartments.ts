@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const rightEnum = z.enum(["simple", "double", "two_simple", "car", "moto"]);
+const rightEnum = z.enum(["simple", "double", "two_simple", "moto"]);
 export const rightsArraySchema = z
   .array(rightEnum)
   .min(1, "Pelo menos um direito é obrigatório");

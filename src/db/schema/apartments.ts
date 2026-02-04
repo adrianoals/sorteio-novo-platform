@@ -6,7 +6,6 @@ export const apartmentRightsEnum = [
   "simple",
   "double",
   "two_simple",
-  "car",
   "moto",
 ] as const;
 export type ApartmentRights = (typeof apartmentRightsEnum)[number];
