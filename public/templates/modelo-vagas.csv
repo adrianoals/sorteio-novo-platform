@@ -1,5 +1,5 @@
-numero,tipo,especial,subsolo,bloco
-V01,simple,normal,Subsolo 1,
-V02,double,normal,Subsolo 1,
-V03,simple,pne,,
-V04,simple,idoso,Subsolo 2,
+numero,tipo,especial,localização,bloco
+V01,Simples,Normal,Subsolo 1,
+V02,Dupla,Normal,Subsolo 1,
+V03,Simples,PNE,,
+V04,Simples,Idoso,Subsolo 2,

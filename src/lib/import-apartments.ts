@@ -2,12 +2,29 @@ import { parse } from "csv-parse/sync";
 
 const RIGHTS = new Set<string>(["simple", "double", "two_simple", "car", "moto"]);
 
+const RIGHTS_PT: Record<string, string> = {
+  simples: "simple",
+  dupla: "double",
+  "duas simples": "two_simple",
+  carro: "car",
+  moto: "moto",
+  simple: "simple",
+  double: "double",
+  two_simple: "two_simple",
+  car: "car",
+};
+
+function normalizeRight(token: string): string {
+  const key = token.trim().toLowerCase();
+  return RIGHTS_PT[key] ?? key;
+}
+
 function parseRightsString(raw: string): string[] {
-  const s = raw.trim().toLowerCase();
+  const s = raw.trim();
   if (!s) return ["simple"];
   return s
     .split(/[,;]/)
-    .map((t) => t.trim())
+    .map((t) => normalizeRight(t))
     .filter(Boolean);
 }
 
@@ -52,7 +69,7 @@ export function validateApartmentRow(
   }
   for (const r of row.rights) {
     if (!RIGHTS.has(r)) {
-      return { ok: false, row: rowIndex, reason: `Direitos inválido: ${r}. Use: simple, double, two_simple, car, moto` };
+      return { ok: false, row: rowIndex, reason: `Direito inválido: ${r}. Use: Simples, Dupla, Duas simples, Carro, Moto` };
     }
   }
   return { ok: true };

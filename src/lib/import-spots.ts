@@ -11,6 +11,29 @@ export interface SpotRow {
 const SPOT_TYPES = new Set(["simple", "double"]);
 const SPECIAL_TYPES = new Set(["normal", "pne", "idoso", "visitor"]);
 
+const SPOT_TYPE_PT: Record<string, string> = {
+  simples: "simple",
+  dupla: "double",
+  simple: "simple",
+  double: "double",
+};
+const SPECIAL_TYPE_PT: Record<string, string> = {
+  normal: "normal",
+  pne: "pne",
+  idoso: "idoso",
+  visitante: "visitor",
+  visitor: "visitor",
+};
+
+function normalizeSpotType(raw: string): string {
+  const key = raw.trim().toLowerCase();
+  return SPOT_TYPE_PT[key] ?? key;
+}
+function normalizeSpecialType(raw: string): string {
+  const key = raw.trim().toLowerCase();
+  return SPECIAL_TYPE_PT[key] ?? key;
+}
+
 export function parseSpotCsv(buffer: Buffer): SpotRow[] {
   const text = buffer.toString("utf-8");
   const rows = parse(text, {
@@ -20,13 +43,19 @@ export function parseSpotCsv(buffer: Buffer): SpotRow[] {
     relax_column_count: true,
   }) as Record<string, string>[];
 
-  return rows.map((r) => ({
-    number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
-    block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
-    basement: (r.basement ?? r.subsolo ?? r["Subsolo"] ?? "").trim() || undefined,
-    spot_type: (r.spot_type ?? r.spotType ?? r.tipo ?? "simple").trim().toLowerCase(),
-    special_type: (r.special_type ?? r.specialType ?? r.especial ?? "normal").trim().toLowerCase(),
-  }));
+  return rows.map((r) => {
+    const rawTipo = r.spot_type ?? r.spotType ?? r.tipo ?? "simple";
+    const rawEspecial = r.special_type ?? r.specialType ?? r.especial ?? "normal";
+    const basementRaw =
+      r.basement ?? r.subsolo ?? r["Subsolo"] ?? r.localização ?? r["localização"] ?? "";
+    return {
+      number: (r.number ?? r.numero ?? r["Número"] ?? "").trim(),
+      block_id: (r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined,
+      basement: basementRaw.trim() || undefined,
+      spot_type: normalizeSpotType(rawTipo),
+      special_type: normalizeSpecialType(rawEspecial),
+    };
+  });
 }
 
 export function validateSpotRow(
@@ -40,10 +69,10 @@ export function validateSpotRow(
     return { ok: false, row: rowIndex, reason: "Número muito longo" };
   }
   if (!SPOT_TYPES.has(row.spot_type)) {
-    return { ok: false, row: rowIndex, reason: `spot_type inválido: ${row.spot_type}. Use: simple, double` };
+    return { ok: false, row: rowIndex, reason: `Tipo inválido: ${row.spot_type}. Use: Simples ou Dupla` };
   }
   if (!SPECIAL_TYPES.has(row.special_type)) {
-    return { ok: false, row: rowIndex, reason: `special_type inválido: ${row.special_type}. Use: normal, pne, idoso, visitor` };
+    return { ok: false, row: rowIndex, reason: `Especial inválido: ${row.special_type}. Use: Normal, PNE, Idoso ou Visitante` };
   }
   return { ok: true };
 }
@@ -56,11 +85,18 @@ export function parseSpotXlsx(buffer: Buffer): SpotRow[] {
   const sheet = wb.Sheets[first];
   const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
 
-  return data.map((r) => ({
-    number: String(r.number ?? r.numero ?? r["Número"] ?? "").trim(),
-    block_id: (String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined) as string | undefined,
-    basement: (String(r.basement ?? r.subsolo ?? r["Subsolo"] ?? "").trim() || undefined) as string | undefined,
-    spot_type: String(r.spot_type ?? r.spotType ?? r.tipo ?? "simple").trim().toLowerCase(),
-    special_type: String(r.special_type ?? r.specialType ?? r.especial ?? "normal").trim().toLowerCase(),
-  }));
+  return data.map((r) => {
+    const rawTipo = String(r.spot_type ?? r.spotType ?? r.tipo ?? "simple");
+    const rawEspecial = String(r.special_type ?? r.specialType ?? r.especial ?? "normal");
+    const basementRaw = String(
+      r.basement ?? r.subsolo ?? r["Subsolo"] ?? r.localização ?? r["localização"] ?? ""
+    ).trim();
+    return {
+      number: String(r.number ?? r.numero ?? r["Número"] ?? "").trim(),
+      block_id: (String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim() || undefined) as string | undefined,
+      basement: basementRaw || undefined,
+      spot_type: normalizeSpotType(rawTipo),
+      special_type: normalizeSpecialType(rawEspecial),
+    };
+  });
 }
