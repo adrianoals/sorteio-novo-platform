@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#5936CC] to-[#3F228D] p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-b from-[#5936CC] to-[#3F228D] p-4">
       <img
         src="/images/LogoSorteioTrasparente.png"
         alt="Sorteio Novo"
