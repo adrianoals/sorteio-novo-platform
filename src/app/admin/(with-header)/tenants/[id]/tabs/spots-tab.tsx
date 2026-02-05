@@ -64,6 +64,8 @@ export function SpotsTab({
 
   const [filterBlockId, setFilterBlockId] = useState("");
   const [filterBasement, setFilterBasement] = useState("");
+  const [filterSpotType, setFilterSpotType] = useState<"" | "simple" | "double">("");
+  const [filterSpecialType, setFilterSpecialType] = useState<"" | "normal" | "pne" | "idoso" | "visitor">("");
   type SpotSortKey = "number" | "block" | "basement" | "spotType" | "specialType";
   const [sortBy, setSortBy] = useState<SpotSortKey>("number");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -233,6 +235,8 @@ export function SpotsTab({
     let list = spots;
     if (filterBlockId) list = list.filter((s) => s.blockId === filterBlockId);
     if (filterBasement) list = list.filter((s) => (s.basement ?? "") === filterBasement);
+    if (filterSpotType) list = list.filter((s) => s.spotType === filterSpotType);
+    if (filterSpecialType) list = list.filter((s) => (s.specialType ?? "normal") === filterSpecialType);
     const getBlockName = (s: Spot) => blockName(s.blockId);
     const getBasement = (s: Spot) => s.basement ?? "";
     const getSpotType = (s: Spot) => spotTypeLabel(s.spotType);
@@ -257,7 +261,7 @@ export function SpotsTab({
       return cmp(v);
     });
     return list;
-  }, [spots, filterBlockId, filterBasement, sortBy, sortDir, blocks]);
+  }, [spots, filterBlockId, filterBasement, filterSpotType, filterSpecialType, sortBy, sortDir, blocks]);
 
   const toggleSelectAll = () => {
     if (selectedIds.size === displayedSpots.length) setSelectedIds(new Set());
@@ -336,20 +340,46 @@ export function SpotsTab({
         )}
         {hasBasement && basements.length > 0 && (
           <label className="flex items-center gap-2">
-            <span className="text-[#5b4d7a]">Subsolo:</span>
+            <span className="text-[#5b4d7a]">Localização:</span>
             <select
               value={filterBasement}
               onChange={(e) => setFilterBasement(e.target.value)}
               className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
             >
-              <option value="">Todos</option>
+              <option value="">Todas</option>
               {basements.map((b) => (
                 <option key={b} value={b}>{b}</option>
               ))}
             </select>
           </label>
         )}
-        {(filterBlockId || filterBasement) && (
+        <label className="flex items-center gap-2">
+          <span className="text-[#5b4d7a]">Tipo:</span>
+          <select
+            value={filterSpotType}
+            onChange={(e) => setFilterSpotType(e.target.value as "" | "simple" | "double")}
+            className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
+          >
+            <option value="">Todos</option>
+            <option value="simple">Simples</option>
+            <option value="double">Dupla</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-[#5b4d7a]">Especial:</span>
+          <select
+            value={filterSpecialType}
+            onChange={(e) => setFilterSpecialType(e.target.value as "" | "normal" | "pne" | "idoso" | "visitor")}
+            className="rounded border border-[#e2deeb] px-2 py-1.5 text-[#3F228D] bg-white"
+          >
+            <option value="">Todos</option>
+            <option value="normal">Normal</option>
+            <option value="pne">PNE</option>
+            <option value="idoso">Idoso</option>
+            <option value="visitor">Visitante</option>
+          </select>
+        </label>
+        {(filterBlockId || filterBasement || filterSpotType || filterSpecialType) && (
           <span className="text-[#5b4d7a]">
             {displayedSpots.length} de {spots.length} vaga(s)
           </span>
@@ -563,31 +593,31 @@ export function SpotsTab({
                 />
               </th>
               <th className="px-4 py-3">
-                <button type="button" onClick={() => handleSort("number")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
-                  Número {sortBy === "number" && (sortDir === "asc" ? "↑" : "↓")}
+                <button type="button" onClick={() => handleSort("number")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1 w-full justify-start">
+                  Número <span className="inline-block w-4 text-center opacity-70">{sortBy === "number" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
                 </button>
               </th>
               {hasBasement && (
                 <th className="px-4 py-3">
-                  <button type="button" onClick={() => handleSort("basement")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
-                    Localização {sortBy === "basement" && (sortDir === "asc" ? "↑" : "↓")}
+                  <button type="button" onClick={() => handleSort("basement")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1 w-full justify-start">
+                    Localização <span className="inline-block w-4 text-center opacity-70">{sortBy === "basement" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
                   </button>
                 </th>
               )}
               <th className="px-4 py-3">
-                <button type="button" onClick={() => handleSort("spotType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
-                  Tipo {sortBy === "spotType" && (sortDir === "asc" ? "↑" : "↓")}
+                <button type="button" onClick={() => handleSort("spotType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1 w-full justify-start">
+                  Tipo <span className="inline-block w-4 text-center opacity-70">{sortBy === "spotType" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
                 </button>
               </th>
               <th className="px-4 py-3">
-                <button type="button" onClick={() => handleSort("specialType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
-                  Especial {sortBy === "specialType" && (sortDir === "asc" ? "↑" : "↓")}
+                <button type="button" onClick={() => handleSort("specialType")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1 w-full justify-start">
+                  Especial <span className="inline-block w-4 text-center opacity-70">{sortBy === "specialType" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
                 </button>
               </th>
               {hasBlocks && (
                 <th className="px-4 py-3">
-                  <button type="button" onClick={() => handleSort("block")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1">
-                    Bloco {sortBy === "block" && (sortDir === "asc" ? "↑" : "↓")}
+                  <button type="button" onClick={() => handleSort("block")} className="font-medium text-[#3F228D] hover:text-[#250E62] flex items-center gap-1 w-full justify-start">
+                    Bloco <span className="inline-block w-4 text-center opacity-70">{sortBy === "block" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
                   </button>
                 </th>
               )}
