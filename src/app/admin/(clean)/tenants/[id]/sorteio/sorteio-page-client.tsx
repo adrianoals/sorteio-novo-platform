@@ -152,16 +152,16 @@ export function SorteioPageClient({
       )}
 
       {loading && (
-        <div className="flex flex-col items-center justify-center py-16">
+        <div className="flex flex-col items-center justify-center py-16 min-h-[50vh]">
           <Image
             src="/gifsorteio/sorteio-gif.gif"
             alt="Sorteando..."
-            width={200}
-            height={120}
+            width={640}
+            height={384}
             unoptimized
-            className="mb-4"
+            className="mb-6 w-[min(640px,90vw)] h-auto object-contain"
           />
-          <p className="text-[#5b4d7a] text-lg">Sorteando...</p>
+          <p className="text-[#5b4d7a] text-3xl font-medium">Sorteando...</p>
         </div>
       )}
 
