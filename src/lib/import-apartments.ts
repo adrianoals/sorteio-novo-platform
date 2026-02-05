@@ -9,17 +9,15 @@ export type ApartmentConfig = {
 
 export type BlockInfo = { id: string; name: string; code: string | null };
 
-const RIGHTS = new Set<string>(["simple", "double", "two_simple", "moto"]);
+const RIGHTS = new Set<string>(["simple", "double", "moto"]);
 
 const RIGHTS_PT: Record<string, string> = {
   simples: "simple",
   dupla: "double",
-  "duas simples": "two_simple",
   carro: "simple",
   moto: "moto",
   simple: "simple",
   double: "double",
-  two_simple: "two_simple",
 };
 
 function normalizeRight(token: string): string {
@@ -27,13 +25,26 @@ function normalizeRight(token: string): string {
   return RIGHTS_PT[key] ?? key;
 }
 
+/** Normaliza e expande: "duas simples" / two_simple (legado) vira dois "simple". */
+function expandRights(tokens: string[]): string[] {
+  const out: string[] = [];
+  for (const t of tokens) {
+    const key = t.trim().toLowerCase();
+    if (key === "duas simples" || key === "two_simple") {
+      out.push("simple", "simple");
+    } else {
+      const r = normalizeRight(t);
+      if (r && RIGHTS.has(r)) out.push(r);
+    }
+  }
+  return out.length ? out : ["simple"];
+}
+
 function parseRightsString(raw: string): string[] {
   const s = raw.trim();
   if (!s) return ["simple"];
-  return s
-    .split(/[,;]/)
-    .map((t) => normalizeRight(t))
-    .filter(Boolean);
+  const tokens = s.split(/[,;]/).map((t) => t.trim()).filter(Boolean);
+  return expandRights(tokens);
 }
 
 function parseLocalizacoes(raw: string): string[] {
@@ -95,7 +106,10 @@ export function mapRawRowToApartmentRow(
     rights = [];
     if (isSim(simplesVal)) rights.push("simple");
     if (isSim(duplaVal)) rights.push("double");
-    if (isSim(duasSimplesVal)) rights.push("two_simple");
+    if (isSim(duasSimplesVal)) {
+      rights.push("simple");
+      rights.push("simple");
+    }
     if (isSim(motoVal)) rights.push("moto");
     if (rights.length === 0) rights = ["simple"];
 
@@ -206,7 +220,7 @@ export function validateApartmentRow(
   }
   for (const r of row.rights) {
     if (!RIGHTS.has(r)) {
-      return { ok: false, row: rowIndex, reason: `Direito inválido: ${r}. Use: Simples, Dupla, Duas simples, Moto` };
+      return { ok: false, row: rowIndex, reason: `Direito inválido: ${r}. Use: Simples, Dupla, Moto (para 2+ vagas simples, repita Simples)` };
     }
   }
   return { ok: true };

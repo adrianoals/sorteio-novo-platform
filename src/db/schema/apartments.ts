@@ -5,7 +5,6 @@ import { blocks } from "./blocks";
 export const apartmentRightsEnum = [
   "simple",
   "double",
-  "two_simple",
   "moto",
 ] as const;
 export type ApartmentRights = (typeof apartmentRightsEnum)[number];

@@ -123,7 +123,7 @@ export async function POST(
       tenantId,
       number: row.number,
       blockId,
-      rights: row.rights as ("simple" | "double" | "two_simple" | "car" | "moto")[],
+      rights: row.rights as ("simple" | "double" | "moto")[],
       allowedSubsolos:
         row.allowed_subsolos && row.allowed_subsolos.length > 0 ? row.allowed_subsolos : undefined,
       allowedBlocks:

@@ -15,7 +15,6 @@ type Apartment = {
 const RIGHTS_OPTIONS = [
   { value: "simple", label: "Simples" },
   { value: "double", label: "Dupla" },
-  { value: "two_simple", label: "Duas simples" },
   { value: "moto", label: "Moto" },
 ];
 
@@ -102,7 +101,9 @@ export function ApartmentsTab({
     setEditingId(a.id);
     setFormNumber(a.number);
     setFormBlockId(a.blockId ?? "");
-    setFormRights(Array.isArray(a.rights) && a.rights.length ? [...a.rights] : ["simple"]);
+    const raw = Array.isArray(a.rights) && a.rights.length ? a.rights : ["simple"];
+    const expanded = raw.flatMap((r) => (r === "two_simple" ? ["simple", "simple"] : [r]));
+    setFormRights(expanded);
     setFormAllowedSubsolos([...(a.allowedSubsolos ?? [])]);
     setFormAllowedBlocks([...(a.allowedBlocks ?? [])]);
     setFormAddSubsolo(basements[0] ?? "");
@@ -247,7 +248,7 @@ export function ApartmentsTab({
 
   const rightsLabel = (a: Apartment) =>
     (Array.isArray(a.rights) ? a.rights : [a.rights])
-      .map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? r)
+      .map((r) => RIGHTS_OPTIONS.find((o) => o.value === r)?.label ?? (r === "two_simple" ? "2× Simples" : r))
       .join(", ");
 
   const displayedApartments = useMemo(() => {
@@ -307,6 +308,7 @@ export function ApartmentsTab({
       )}
       <div>
         <label className="block text-sm font-medium text-[#3F228D] mb-1">Direitos (pode ter mais de um)</label>
+        <p className="text-xs text-[#5b4d7a] mb-1">Adicione &quot;Simples&quot; várias vezes para 2 ou mais vagas simples. Um apartamento = uma ficha.</p>
         <div className="flex flex-wrap items-center gap-2 mb-1">
           {formRights.map((r, i) => (
             <span key={`${r}-${i}`} className="inline-flex items-center gap-1 rounded bg-[#e2deeb] px-2 py-0.5 text-sm">

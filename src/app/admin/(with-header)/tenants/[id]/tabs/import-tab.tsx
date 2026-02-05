@@ -159,7 +159,7 @@ export function ImportTab({ tenant }: { tenant: Tenant }) {
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4 space-y-1">
             <li><strong>numero</strong> — número do apartamento (obrigatório)</li>
             {hasBlocks && <li><strong>bloco</strong> — nome ou código do bloco ao qual o apartamento pertence</li>}
-            <li><strong>Simples, Dupla, Duas simples, Moto</strong> — use SIM em pelo menos um (direitos do apartamento)</li>
+            <li><strong>Simples, Dupla, Duas simples, Moto</strong> — use SIM em pelo menos um. &quot;Duas simples&quot; = 2 vagas simples (equivalente a adicionar Simples duas vezes).</li>
             {hasBasement && basements.length > 0 && (
               <li><strong>Pode [local]</strong> — SIM/NÃO para cada localização em que o apartamento pode concorrer ({basements.join(", ")})</li>
             )}
