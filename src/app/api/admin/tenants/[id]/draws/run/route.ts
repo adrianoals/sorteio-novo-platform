@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import {
-  tenants,
-  draws,
-  drawResults,
-  apartments,
-  parkingSpots,
-} from "@/db/schema";
+import { tenants, draws, drawResults } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runDrawS1 } from "@/lib/draw-engine-s1";
 import { logAudit } from "@/lib/audit";
+import { getFullDrawResults } from "@/lib/draw-results-full";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -64,18 +59,7 @@ export async function POST(
     resultCount: results.length,
   });
 
-  const resultsWithDetails = await db
-    .select({
-      apartmentNumber: apartments.number,
-      spotNumber: parkingSpots.number,
-      spotBasement: parkingSpots.basement,
-      spotType: parkingSpots.spotType,
-      spotSpecialType: parkingSpots.specialType,
-    })
-    .from(drawResults)
-    .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
-    .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, draw.id));
+  const resultsWithDetails = await getFullDrawResults(tenantId, draw.id);
 
   return NextResponse.json({
     drawId: draw.id,

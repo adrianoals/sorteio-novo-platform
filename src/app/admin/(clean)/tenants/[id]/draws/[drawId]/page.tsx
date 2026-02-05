@@ -1,14 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import {
-  tenants,
-  draws,
-  drawResults,
-  apartments,
-  parkingSpots,
-} from "@/db/schema";
+import { tenants, draws } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { getFullDrawResults } from "@/lib/draw-results-full";
 import { ViewDrawPageClient } from "./view-draw-page-client";
 
 export default async function ViewDrawPage({
@@ -36,18 +31,7 @@ export default async function ViewDrawPage({
     .limit(1);
   if (!draw) notFound();
 
-  const results = await db
-    .select({
-      apartmentNumber: apartments.number,
-      spotNumber: parkingSpots.number,
-      spotBasement: parkingSpots.basement,
-      spotType: parkingSpots.spotType,
-      spotSpecialType: parkingSpots.specialType,
-    })
-    .from(drawResults)
-    .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
-    .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, drawId));
+  const results = await getFullDrawResults(tenantId, drawId);
 
   return (
     <ViewDrawPageClient
