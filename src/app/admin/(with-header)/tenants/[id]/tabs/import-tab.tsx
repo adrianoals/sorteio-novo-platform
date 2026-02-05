@@ -81,7 +81,6 @@ export function ImportTab({ tenant }: { tenant: Tenant }) {
       ...(hasBlocks ? ["bloco"] : []),
       "Simples",
       "Dupla",
-      "Duas simples",
       "Moto",
       ...(hasBasement ? basements.map((b) => `Pode ${b}`) : []),
       ...(hasBlocks ? blocks.map((b) => `Pode ${b.name}`) : []),
@@ -90,7 +89,6 @@ export function ImportTab({ tenant }: { tenant: Tenant }) {
       "101",
       ...(hasBlocks ? [blocks[0]?.name ?? "Bloco A"] : []),
       "SIM",
-      "NÃO",
       "NÃO",
       "NÃO",
       ...(hasBasement ? basements.map(() => "SIM") : []),
@@ -159,7 +157,7 @@ export function ImportTab({ tenant }: { tenant: Tenant }) {
           <ul className="text-sm text-[#5b4d7a] list-disc list-inside mb-4 space-y-1">
             <li><strong>numero</strong> — número do apartamento (obrigatório)</li>
             {hasBlocks && <li><strong>bloco</strong> — nome ou código do bloco ao qual o apartamento pertence</li>}
-            <li><strong>Simples, Dupla, Duas simples, Moto</strong> — use SIM em pelo menos um. &quot;Duas simples&quot; = 2 vagas simples (equivalente a adicionar Simples duas vezes).</li>
+            <li><strong>Simples, Dupla, Moto</strong> — use SIM em pelo menos um. Para 2 ou mais vagas simples, use a coluna <strong>Direitos</strong> (texto) com valor <em>Simples, Simples</em>.</li>
             {hasBasement && basements.length > 0 && (
               <li><strong>Pode [local]</strong> — SIM/NÃO para cada localização em que o apartamento pode concorrer ({basements.join(", ")})</li>
             )}

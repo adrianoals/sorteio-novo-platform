@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 type ResultRow = {
@@ -43,6 +44,14 @@ export function ViewDrawPageClient({
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL ?? "";
   const resultUrl = `${baseUrl}/${tenantSlug}/resultado/${drawId}`;
+
+  const resultsByApartment = useMemo(
+    () =>
+      [...results].sort((a, b) =>
+        String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
+      ),
+    [results]
+  );
 
   const createdAtFormatted = (() => {
     try {
@@ -105,7 +114,7 @@ export function ViewDrawPageClient({
             </tr>
           </thead>
           <tbody>
-            {results.map((r, i) => (
+            {resultsByApartment.map((r, i) => (
               <tr
                 key={i}
                 className="border-b border-[#e2deeb] hover:bg-[#faf9ff]"

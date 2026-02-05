@@ -92,11 +92,10 @@ export function mapRawRowToApartmentRow(
 
   const simplesVal = get("Simples", "simples");
   const duplaVal = get("Dupla", "dupla");
-  const duasSimplesVal = get("Duas simples", "duas simples");
   const motoVal = get("Moto", "moto");
 
   const usaAdaptativo =
-    simplesVal !== "" || duplaVal !== "" || duasSimplesVal !== "" || motoVal !== "";
+    simplesVal !== "" || duplaVal !== "" || motoVal !== "";
 
   let rights: string[];
   let allowed_subsolos: string[] | undefined;
@@ -106,10 +105,6 @@ export function mapRawRowToApartmentRow(
     rights = [];
     if (isSim(simplesVal)) rights.push("simple");
     if (isSim(duplaVal)) rights.push("double");
-    if (isSim(duasSimplesVal)) {
-      rights.push("simple");
-      rights.push("simple");
-    }
     if (isSim(motoVal)) rights.push("moto");
     if (rights.length === 0) rights = ["simple"];
 

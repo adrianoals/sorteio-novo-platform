@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
@@ -52,14 +52,28 @@ export function SorteioPageClient({
     ? `${baseUrl}/${tenantSlug}/resultado/${draw.drawId}`
     : "";
 
+  const resultsByApartment = useMemo(() => {
+    if (!draw?.results?.length) return [];
+    return [...draw.results].sort((a, b) =>
+      String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
+    );
+  }, [draw?.results]);
+
+  /** Tempo mínimo (ms) que a animação "Sorteando..." fica visível para todos os condomínios. */
+  const SORTEANDO_MIN_DURATION_MS = 5000;
+
   async function handleSortear() {
     setError(null);
     setLoading(true);
+    const startedAt = Date.now();
     try {
       const res = await fetch(`/api/admin/tenants/${tenantId}/draws/run`, {
         method: "POST",
       });
       const data = await res.json().catch(() => ({}));
+      const elapsed = Date.now() - startedAt;
+      const waitMs = Math.max(0, SORTEANDO_MIN_DURATION_MS - elapsed);
+      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       if (!res.ok) {
         setError(data.error ?? "Erro ao executar sorteio.");
         setLoading(false);
@@ -71,6 +85,9 @@ export function SorteioPageClient({
         results: data.results ?? [],
       });
     } catch {
+      const elapsed = Date.now() - startedAt;
+      const waitMs = Math.max(0, SORTEANDO_MIN_DURATION_MS - elapsed);
+      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       setError("Erro de conexão.");
     }
     setLoading(false);
@@ -187,7 +204,7 @@ export function SorteioPageClient({
                 </tr>
               </thead>
               <tbody>
-                {draw.results.map((r, i) => (
+                {resultsByApartment.map((r, i) => (
                   <tr
                     key={i}
                     className="border-b border-[#e2deeb] hover:bg-[#faf9ff]"

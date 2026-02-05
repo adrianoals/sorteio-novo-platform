@@ -13,6 +13,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
   const [draws, setDraws] = useState<DrawItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteModalDraw, setDeleteModalDraw] = useState<DrawItem | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -27,8 +28,9 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
     load();
   }, [tenantId]);
 
-  function handleExcluir(drawId: string) {
-    if (!confirm("Excluir este sorteio? Esta ação não pode ser desfeita.")) return;
+  function confirmExcluir() {
+    if (!deleteModalDraw) return;
+    const drawId = deleteModalDraw.id;
     setDeletingId(drawId);
     fetch(`/api/admin/tenants/${tenantId}/draws/${drawId}`, {
       method: "DELETE",
@@ -36,6 +38,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
     })
       .then(async (r) => {
         if (r.ok) {
+          setDeleteModalDraw(null);
           await load();
         } else {
           const data = await r.json().catch(() => ({}));
@@ -65,6 +68,46 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
   return (
     <div className="space-y-6">
       <h3 className="font-medium text-[#250E62]">Sorteios</h3>
+
+      {deleteModalDraw && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && !deletingId && setDeleteModalDraw(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-draw-title"
+        >
+          <div
+            className="bg-white rounded-xl shadow-lg max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 id="delete-draw-title" className="font-medium text-[#250E62] mb-2">
+              Excluir sorteio
+            </h4>
+            <p className="text-[#5b4d7a] mb-4">
+              Excluir o sorteio de <strong>{formatDate(deleteModalDraw.createdAt)}</strong> ({deleteModalDraw.resultCount} atribuições)? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => !deletingId && setDeleteModalDraw(null)}
+                disabled={!!deletingId}
+                className="rounded border border-[#e2deeb] px-4 py-2 text-sm text-[#3F228D] hover:bg-[#faf9ff] disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmExcluir}
+                disabled={!!deletingId}
+                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deletingId ? "Excluindo…" : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-[#5b4d7a]">Carregando…</p>
@@ -99,11 +142,11 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleExcluir(d.id)}
-                      disabled={deletingId === d.id}
+                      onClick={() => setDeleteModalDraw(d)}
+                      disabled={!!deletingId}
                       className="text-red-600 hover:text-red-800 disabled:opacity-50"
                     >
-                      {deletingId === d.id ? "Excluindo…" : "Excluir"}
+                      Excluir
                     </button>
                   </td>
                 </tr>

@@ -22,15 +22,23 @@ export function ResultadoPageClient({
 }) {
   const [selectedApartment, setSelectedApartment] = useState<string>("");
 
+  const resultsByApartment = useMemo(
+    () =>
+      [...results].sort((a, b) =>
+        String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
+      ),
+    [results]
+  );
+
   const apartmentNumbers = useMemo(() => {
-    const set = new Set(results.map((r) => r.apartmentNumber));
+    const set = new Set(resultsByApartment.map((r) => r.apartmentNumber));
     return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  }, [results]);
+  }, [resultsByApartment]);
 
   const filteredResults = useMemo(() => {
-    if (!selectedApartment) return results;
-    return results.filter((r) => r.apartmentNumber === selectedApartment);
-  }, [results, selectedApartment]);
+    if (!selectedApartment) return resultsByApartment;
+    return resultsByApartment.filter((r) => r.apartmentNumber === selectedApartment);
+  }, [resultsByApartment, selectedApartment]);
 
   return (
     <div className="rounded-lg border border-[#e2deeb] bg-white p-8 shadow-sm">
