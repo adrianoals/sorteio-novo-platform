@@ -166,7 +166,7 @@ export function SorteioPageClient({
       )}
 
       {draw && !loading && (
-        <div className="space-y-8">
+        <div className="space-y-8 resultado-sorteio-print">
           <div className="text-center">
             <div className="flex items-center justify-center gap-4 mb-2">
               <Image
@@ -230,16 +230,25 @@ export function SorteioPageClient({
               Sorteio finalizado em {createdAtFormatted}.
             </p>
 
-            <button
-              type="button"
-              onClick={handleExport}
-              className="rounded-lg bg-[#250E62] px-6 py-3 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors"
-            >
-              Exportar planilha (Excel)
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3 no-print">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="rounded-lg bg-[#250E62] px-6 py-3 text-sm font-medium text-white hover:bg-[#1e0b4f] transition-colors"
+              >
+                Exportar planilha (Excel)
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-lg border border-[#250E62] px-6 py-3 text-sm font-medium text-[#250E62] hover:bg-[#faf9ff] transition-colors"
+              >
+                Imprimir
+              </button>
+            </div>
 
             {resultUrl && (
-              <div className="flex flex-col items-center gap-2 pt-2">
+              <div className="flex flex-col items-center gap-2 pt-2 no-print">
                 <QRCodeSVG value={resultUrl} size={160} level="M" />
                 <p className="text-sm text-[#5b4d7a] max-w-[220px]">
                   Escaneie o QR Code para acessar o resultado na página pública
@@ -248,7 +257,7 @@ export function SorteioPageClient({
             )}
           </div>
 
-          <p className="text-center pt-4">
+          <p className="text-center pt-4 no-print">
             <Link
               href={`/admin/tenants/${tenantId}`}
               className="text-sm text-[#5936CC] hover:text-[#250E62]"

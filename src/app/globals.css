@@ -40,3 +40,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-outfit), sans-serif;
 }
+
+/* Impressão: esconder botões/links/QR; evitar quebra no meio da linha da tabela; A4 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .resultado-sorteio-print table tbody tr {
+    break-inside: avoid;
+  }
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+}
