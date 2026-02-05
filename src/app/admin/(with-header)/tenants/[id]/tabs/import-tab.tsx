@@ -210,8 +210,13 @@ export function ImportTab({ tenant }: { tenant: Tenant }) {
               setResult(null);
               setError(null);
             }}
-            className="block w-full text-sm text-[#5b4d7a] file:mr-4 file:rounded file:border-0 file:bg-[#faf9ff] file:px-4 file:py-2 file:text-[#1a0d2e]"
+            className="block w-full text-sm text-[#5b4d7a] file:mr-4 file:rounded file:border file:border-[#250E62] file:bg-[#250E62] file:px-4 file:py-2 file:text-sm file:font-medium file:text-white file:cursor-pointer file:hover:bg-[#5936CC] file:hover:border-[#5936CC] file:transition-colors"
           />
+          {file && (
+            <p className="mt-1.5 text-sm text-[#5b4d7a]">
+              Selecionado: <span className="font-medium text-[#3F228D]">{file.name}</span>
+            </p>
+          )}
         </div>
         {error && (
           <p className="text-sm text-red-600" role="alert">
