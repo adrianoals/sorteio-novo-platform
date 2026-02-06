@@ -1,5 +1,9 @@
 # Modelo de direitos e vagas (especificação)
 
+**Implementado:** direitos como lista (`rights` JSON no apartamento), vagas travadas (`apartment_id` na vaga), restrições opcionais (`allowed_subsolos`, `allowed_blocks`). Motor S1 usa demanda pendente e vagas não atribuídas.
+
+---
+
 Documento que descreve o desenho genérico de **direitos do apartamento**, **restrições opcionais** e **vagas travadas (fixas)**. Objetivo: cobrir vários cenários de condomínios sem regras hardcoded por cliente.
 
 ---

@@ -1,5 +1,9 @@
 # Fase 02 – Fluxo de assembleia (baseado no Sky View / Django)
 
+**Status: implementado.** O fluxo descrito abaixo está em uso: página do sorteio (admin), motor S1, resultado com pré-atribuídos, export Excel (ExcelJS, colunas por config), QR Code, página pública por draw, aba Sorteios no admin, impressão/PDF.
+
+---
+
 Objetivo: o sistema é usado **em assembleia de condomínio** (por quem conduz a reunião). A **página do sorteio** (botão Sortear, GIF, resultado, exportar, QR Code) tem **acesso restrito**; apenas a **página do resultado** (consultada pelo morador via link ou QR Code) é **pública**. Tanto a página do sorteio quanto a página do resultado (QR Code) devem se **basear no projeto anterior** (Sky View / Django) em layout e fluxo.
 
 ---

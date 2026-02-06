@@ -65,10 +65,10 @@ A plataforma terá, no produto final:
   * consistência de blocos/subsolos
 * **Auditoria básica**: log de ações admin (quem alterou o quê)
 
-### Fora de escopo (MVP Fase 01)
+### Fora de escopo (MVP Fase 01) — Fase 02 já implementada
 
-* Execução do sorteio (vem na Fase 02)
-* Export Excel e QR Code (Fase 02 ou 03)
+* ~~Execução do sorteio (vem na Fase 02)~~ → **Fase 02 implementada**
+* ~~Export Excel e QR Code (Fase 02 ou 03)~~ → **implementado**
 * Área do cliente (login do cliente / tenant) — vem **depois** do sorteio simples
 * Compra/checkout/assinatura
 * Multi-domínio por tenant
@@ -294,11 +294,12 @@ A plataforma terá, no produto final:
 
 **Ordem intencional:** sorteio simples vem **antes** da área cliente — assim o produto entrega o valor central (rodar um sorteio) e valida o fluxo antes de construir o portal do cliente.
 
-### Fase 02 — Sorteio (engines) — antes da área cliente
+### Fase 02 — Sorteio (engines) — antes da área cliente — **concluída**
 
-* engine **S1 (simples em lote)**: executar sorteio a partir dos dados configurados no Admin
-* export Excel do resultado (opcional já na Fase 02)
-* QR code / consulta pública do resultado (opcional)
+* engine **S1 (simples em lote)**: executar sorteio a partir dos dados configurados no Admin ✅
+* export Excel do resultado (planilha padronizada com ExcelJS, colunas por config do condomínio) ✅
+* QR code / consulta pública do resultado (página por slug + drawId) ✅
+* Histórico de sorteios no admin (aba Sorteios, excluir com confirmação); vagas pré-atribuídas aparecem no resultado; impressão/PDF ✅
 * depois: S2 (presença), S3 (duplas/PNE), etc.
 
 ### Fase 03 — Área Cliente + Produto
