@@ -99,3 +99,33 @@ export async function PATCH(
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const [existing] = await db
+    .select({ id: tenants.id, name: tenants.name })
+    .from(tenants)
+    .where(eq(tenants.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return NextResponse.json({ error: "Condomínio não encontrado" }, { status: 404 });
+  }
+
+  const actorId = session.user?.id ?? session.user?.email ?? "unknown";
+  await logAudit(String(actorId), "delete", "tenant", id, id, {
+    name: existing.name,
+  });
+
+  await db.delete(tenants).where(eq(tenants.id, id));
+
+  return new NextResponse(null, { status: 204 });
+}
