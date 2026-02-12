@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tenants, draws, drawResults } from "@/db/schema";
+import { tenants, draws, drawResults, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runDrawS1 } from "@/lib/draw-engine-s1";
 import { logAudit } from "@/lib/audit";
@@ -15,6 +15,16 @@ async function ensureTenant(tenantId: string) {
     .where(eq(tenants.id, tenantId))
     .limit(1);
   return t ?? null;
+}
+
+async function resolveActorUserId(sessionUserId: string | null | undefined) {
+  if (!sessionUserId) return null;
+  const [existingUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, sessionUserId))
+    .limit(1);
+  return existingUser?.id ?? null;
 }
 
 export async function POST(
@@ -34,6 +44,7 @@ export async function POST(
 
   const randomSeed = randomUUID();
   const actorId = session.user?.id ?? session.user?.email ?? "unknown";
+  const actorUserId = await resolveActorUserId(session.user?.id);
 
   let txResult: { draw: { id: string; createdAt: Date }; resultsCount: number };
   try {
@@ -41,7 +52,7 @@ export async function POST(
       const { results } = await runDrawS1(tenantId, { seed: randomSeed, executor: tx });
       const [draw] = await tx
         .insert(draws)
-        .values({ tenantId, randomSeed })
+        .values({ tenantId, randomSeed, executedByUserId: actorUserId })
         .returning({ id: draws.id, createdAt: draws.createdAt });
 
       if (!draw) {
@@ -61,7 +72,8 @@ export async function POST(
 
       return { draw, resultsCount: results.length };
     });
-  } catch {
+  } catch (err) {
+    console.error("Run draw error:", err);
     return NextResponse.json(
       { error: "Falha ao executar sorteio" },
       { status: 500 }

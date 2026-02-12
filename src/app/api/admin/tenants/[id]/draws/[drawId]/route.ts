@@ -60,6 +60,7 @@ export async function GET(
   return NextResponse.json({
     id: draw.id,
     createdAt: draw.createdAt,
+    executedByUserId: draw.executedByUserId ?? null,
     results,
   });
 }

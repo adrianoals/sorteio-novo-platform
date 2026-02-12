@@ -28,7 +28,11 @@ export async function GET(
   }
 
   const list = await db
-    .select({ id: draws.id, createdAt: draws.createdAt })
+    .select({
+      id: draws.id,
+      createdAt: draws.createdAt,
+      executedByUserId: draws.executedByUserId,
+    })
     .from(draws)
     .where(eq(draws.tenantId, tenantId))
     .orderBy(desc(draws.createdAt));
@@ -48,6 +52,7 @@ export async function GET(
     list.map((d) => ({
       id: d.id,
       createdAt: d.createdAt,
+      executedByUserId: d.executedByUserId,
       resultCount: Number(countMap.get(d.id)) || 0,
     }))
   );

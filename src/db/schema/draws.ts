@@ -2,6 +2,7 @@ import { pgTable, uuid, timestamp, varchar, foreignKey, unique } from "drizzle-o
 import { tenants } from "./tenants";
 import { apartments } from "./apartments";
 import { parkingSpots } from "./parking_spots";
+import { users } from "./users";
 
 export const draws = pgTable(
   "draws",
@@ -14,6 +15,9 @@ export const draws = pgTable(
       .notNull()
       .defaultNow(),
     randomSeed: varchar("random_seed", { length: 128 }),
+    executedByUserId: uuid("executed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
   },
   (t) => [unique("draws_id_tenant_unique").on(t.id, t.tenantId)]
 );

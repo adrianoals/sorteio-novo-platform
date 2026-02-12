@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, jsonb } from "drizzle-orm/pg-core";
+import { users } from "./users";
 
 export const tenantStatusEnum = ["active", "inactive"] as const;
 export type TenantStatus = (typeof tenantStatusEnum)[number];
@@ -18,6 +19,9 @@ export interface TenantBranding {
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
+  createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   status: varchar("status", { length: 20 }).notNull().default("active"),

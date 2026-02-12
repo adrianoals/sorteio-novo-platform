@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tenants } from "@/db/schema";
+import { tenants, users } from "@/db/schema";
 import { createTenantSchema } from "@/lib/validations/tenants";
 import { logAudit } from "@/lib/audit";
 import { and, eq, ilike, or } from "drizzle-orm";
+
+async function resolveActorUserId(sessionUserId: string | null | undefined) {
+  if (!sessionUserId) return null;
+  const [existingUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, sessionUserId))
+    .limit(1);
+  return existingUser?.id ?? null;
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -77,10 +87,16 @@ export async function POST(req: NextRequest) {
       { status: 409 }
     );
   }
+  const actorUserId = await resolveActorUserId(session.user.id);
 
   const [created] = await db
     .insert(tenants)
-    .values({ name, slug: normalizedSlug, status: "active" })
+    .values({
+      name,
+      slug: normalizedSlug,
+      status: "active",
+      createdByUserId: actorUserId,
+    })
     .returning();
 
   const actorId = session.user?.id ?? session.user?.email ?? "unknown";
