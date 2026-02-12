@@ -12,6 +12,11 @@ type ChecksResult = {
     spots: number;
     apartmentsByRights: Record<string, number>;
     spotsByType: Record<string, number>;
+    rightsSlotsTotal?: number;
+    spotSlotsTotal?: number;
+    slotBalance?: number;
+    apartmentsWithMultipleSlots?: number;
+    extraSlotsFromMulti?: number;
   };
 };
 
@@ -109,6 +114,17 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
             Apartamentos: <strong>{result.counts.apartments}</strong>
             {" "}· Vagas: <strong>{result.counts.spots}</strong>
           </p>
+          <p className="text-sm text-[#5b4d7a] mt-1">
+            Slots de direito: <strong>{result.counts.rightsSlotsTotal ?? 0}</strong>
+            {" "}· Slots de vaga: <strong>{result.counts.spotSlotsTotal ?? 0}</strong>
+            {" "}· Saldo: <strong>{result.counts.slotBalance ?? 0}</strong>
+          </p>
+          {(result.counts.apartmentsWithMultipleSlots ?? 0) > 0 && (
+            <p className="text-sm text-[#5b4d7a] mt-1">
+              {result.counts.apartmentsWithMultipleSlots} apartamento(s) possuem múltiplos direitos, somando{" "}
+              {result.counts.extraSlotsFromMulti ?? 0} slot(s) extras além da base de 1 vaga por apartamento.
+            </p>
+          )}
           {Object.keys(result.counts.apartmentsByRights).length > 0 && (
             <p className="text-sm text-[#5b4d7a] mt-1">
               Por direitos:{" "}

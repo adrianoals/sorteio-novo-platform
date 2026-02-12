@@ -120,10 +120,34 @@ export async function GET(
   }
 
   const rightsCount: Record<string, number> = {};
+  let totalRightsSlots = 0;
+  let apartmentsWithMultipleSlots = 0;
+  let extraSlotsFromMulti = 0;
+
+  const slotCountForRight = (right: string): number => {
+    if (right === "two_simple") return 2;
+    if (
+      right === "simple" ||
+      right === "double" ||
+      right === "moto" ||
+      right === "car"
+    ) {
+      return 1;
+    }
+    return 0;
+  };
+
   for (const a of aptList) {
     const list = (a.rights ?? []) as string[];
+    let aptSlots = 0;
     for (const r of list) {
       rightsCount[r] = (rightsCount[r] ?? 0) + 1;
+      aptSlots += slotCountForRight(r);
+    }
+    totalRightsSlots += aptSlots;
+    if (aptSlots > 1) {
+      apartmentsWithMultipleSlots++;
+      extraSlotsFromMulti += aptSlots - 1;
     }
   }
   const spotTypeCount: Record<string, number> = {};
@@ -131,13 +155,14 @@ export async function GET(
     spotTypeCount[s.spotType] = (spotTypeCount[s.spotType] ?? 0) + 1;
   }
 
-  const simpleSlots = (rightsCount["simple"] ?? 0) + 2 * (rightsCount["two_simple"] ?? 0) + (rightsCount["double"] ?? 0);
   const simpleSpots = spotTypeCount["simple"] ?? 0;
   const doubleSpots = spotTypeCount["double"] ?? 0;
   const totalProvidedSlots = simpleSpots + doubleSpots;
-  if (totalApts > 0 && totalSpots > 0 && totalProvidedSlots < simpleSlots) {
+  const slotBalance = totalProvidedSlots - totalRightsSlots;
+
+  if (totalApts > 0 && totalSpots > 0 && totalProvidedSlots < totalRightsSlots) {
     warnings.push(
-      `Direitos (slots) somam ${simpleSlots}, vagas (simples+dupla) somam ${totalProvidedSlots}. Pode faltar vaga para sorteio.`
+      `Direitos (slots) somam ${totalRightsSlots}, vagas (simples+dupla) somam ${totalProvidedSlots}. Pode faltar vaga para sorteio.`
     );
   }
 
@@ -155,6 +180,11 @@ export async function GET(
       spots: totalSpots,
       apartmentsByRights: rightsCount,
       spotsByType: spotTypeCount,
+      rightsSlotsTotal: totalRightsSlots,
+      spotSlotsTotal: totalProvidedSlots,
+      slotBalance,
+      apartmentsWithMultipleSlots,
+      extraSlotsFromMulti,
     },
   });
 }
