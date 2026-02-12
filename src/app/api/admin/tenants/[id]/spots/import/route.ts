@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { tenants, parkingSpots, blocks } from "@/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   parseSpotCsvRaw,
   parseSpotXlsxRaw,
@@ -40,6 +40,22 @@ function getRawRows(
   const isXlsx = fn.endsWith(".xlsx") || fn.endsWith(".xls") || buffer[0] === 0x50;
   if (isXlsx) return parseSpotXlsxRaw(buffer);
   return parseSpotCsvRaw(buffer);
+}
+
+function spotDupKey(
+  number: string,
+  basement: string | null,
+  blockId: string | null
+): string {
+  return `${number}::${basement ?? ""}::${blockId ?? ""}`;
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
 }
 
 export async function POST(
@@ -81,6 +97,27 @@ export async function POST(
   const errors: { row: number; reason: string }[] = [];
   let inserted = 0;
   let rejected = 0;
+  const toInsert: Array<{
+    tenantId: string;
+    number: string;
+    blockId: string | null;
+    basement: string | null;
+    spotType: "simple" | "double";
+    specialType: "normal" | "pne" | "idoso" | "visitor";
+  }> = [];
+
+  const existingRows = await db
+    .select({
+      number: parkingSpots.number,
+      basement: parkingSpots.basement,
+      blockId: parkingSpots.blockId,
+    })
+    .from(parkingSpots)
+    .where(eq(parkingSpots.tenantId, tenantId));
+
+  const existingKeys = new Set(
+    existingRows.map((r) => spotDupKey(r.number, r.basement, r.blockId))
+  );
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -103,33 +140,14 @@ export async function POST(
 
     const basement = (row.basement ?? "").trim() || null;
     const blockId = (row.block_id ?? "").trim() || null;
-    const basementCond =
-      basement != null && basement !== ""
-        ? eq(parkingSpots.basement, basement)
-        : isNull(parkingSpots.basement);
-    const blockIdCond = blockId
-      ? eq(parkingSpots.blockId, blockId)
-      : isNull(parkingSpots.blockId);
-    const existing = await db
-      .select({ id: parkingSpots.id })
-      .from(parkingSpots)
-      .where(
-        and(
-          eq(parkingSpots.tenantId, tenantId),
-          eq(parkingSpots.number, row.number),
-          basementCond,
-          blockIdCond
-        )
-      )
-      .limit(1);
-
-    if (existing.length) {
+    const key = spotDupKey(row.number, basement, blockId);
+    if (existingKeys.has(key)) {
       errors.push({ row: i + 1, reason: "Duplicado (número + localização/bloco)" });
       rejected++;
       continue;
     }
 
-    await db.insert(parkingSpots).values({
+    toInsert.push({
       tenantId,
       number: row.number,
       blockId,
@@ -137,7 +155,12 @@ export async function POST(
       spotType: row.spot_type as "simple" | "double",
       specialType: (row.special_type as "normal" | "pne" | "idoso" | "visitor") || "normal",
     });
-    inserted++;
+    existingKeys.add(key);
+  }
+
+  for (const chunk of chunkArray(toInsert, 200)) {
+    await db.insert(parkingSpots).values(chunk);
+    inserted += chunk.length;
   }
 
   const actorId = session.user?.id ?? session.user?.email ?? "unknown";

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { tenants, apartments, blocks } from "@/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   parseApartmentCsvRaw,
   parseApartmentXlsxRaw,
@@ -40,6 +40,18 @@ function getRawRows(
   const isXlsx = fn.endsWith(".xlsx") || fn.endsWith(".xls") || buffer[0] === 0x50;
   if (isXlsx) return parseApartmentXlsxRaw(buffer);
   return parseApartmentCsvRaw(buffer);
+}
+
+function apartmentDupKey(number: string, blockId: string | null): string {
+  return `${number}::${blockId ?? ""}`;
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
 }
 
 export async function POST(
@@ -80,6 +92,26 @@ export async function POST(
   const errors: { row: number; reason: string }[] = [];
   let inserted = 0;
   let rejected = 0;
+  const toInsert: Array<{
+    tenantId: string;
+    number: string;
+    blockId: string | null;
+    rights: ("simple" | "double" | "moto")[];
+    allowedSubsolos?: string[];
+    allowedBlocks?: string[];
+  }> = [];
+
+  const existingRows = await db
+    .select({
+      number: apartments.number,
+      blockId: apartments.blockId,
+    })
+    .from(apartments)
+    .where(eq(apartments.tenantId, tenantId));
+
+  const existingKeys = new Set(
+    existingRows.map((r) => apartmentDupKey(r.number, r.blockId))
+  );
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -96,30 +128,14 @@ export async function POST(
     }
 
     const blockId = (row.block_id ?? "").trim() || null;
-    const dupCondition = blockId
-      ? and(
-          eq(apartments.tenantId, tenantId),
-          eq(apartments.number, row.number),
-          eq(apartments.blockId, blockId)
-        )
-      : and(
-          eq(apartments.tenantId, tenantId),
-          eq(apartments.number, row.number),
-          isNull(apartments.blockId)
-        );
-    const existing = await db
-      .select({ id: apartments.id })
-      .from(apartments)
-      .where(dupCondition)
-      .limit(1);
-
-    if (existing.length) {
+    const key = apartmentDupKey(row.number, blockId);
+    if (existingKeys.has(key)) {
       errors.push({ row: i + 1, reason: "Duplicado (número + bloco)" });
       rejected++;
       continue;
     }
 
-    await db.insert(apartments).values({
+    toInsert.push({
       tenantId,
       number: row.number,
       blockId,
@@ -129,7 +145,12 @@ export async function POST(
       allowedBlocks:
         row.allowed_blocks && row.allowed_blocks.length > 0 ? row.allowed_blocks : undefined,
     });
-    inserted++;
+    existingKeys.add(key);
+  }
+
+  for (const chunk of chunkArray(toInsert, 200)) {
+    await db.insert(apartments).values(chunk);
+    inserted += chunk.length;
   }
 
   const actorId = session.user?.id ?? session.user?.email ?? "unknown";
