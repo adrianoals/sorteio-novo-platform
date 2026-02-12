@@ -1,4 +1,4 @@
-Segue a **análise do Sorteio_Novo** (projeto Django legado) para você usar como base na V2. A V2 (sorteioNovo-V2) já está em desenvolvimento; para o estado atual do produto e do fluxo de assembleia, ver `docs/prd.md` e `docs/fase-02-fluxo-assembleia.md`.
+Segue a **análise do Sorteio_Novo** (projeto Django legado) para você usar como base na V2. A V2 (sorteioNovo-V2) já está em desenvolvimento; para o estado atual do produto e do fluxo de assembleia, ver `docs/prd.md` e `docs/artifacts/fase-02-fluxo-assembleia.md`.
 
 ---
 

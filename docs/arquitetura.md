@@ -1,6 +1,6 @@
 # Arquitetura — SorteioNovo V2
 
-Referência de decisões de infra, ambiente e banco. Baseado nas respostas em `docs/questions.md`.
+Referência de decisões de infra, ambiente e banco. Baseado nas respostas em `docs/future/questions.md`.
 
 ---
 
@@ -74,6 +74,6 @@ Arquivo de referência: **`.env.example`** na raiz (copiar para `.env` e preench
 
 ## 8. Referências
 
-- Decisões detalhadas: `docs/questions.md`
+- Decisões detalhadas: `docs/future/questions.md`
 - Produto e modelo de dados: `docs/prd.md`
 - Como rodar em dev: `docs/desenvolvimento-local.md` (ou README)

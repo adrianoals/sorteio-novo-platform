@@ -66,4 +66,4 @@ Login admin: `http://localhost:3000/admin/login`
 - `docs/desenvolvimento-local.md`
 - `docs/arquitetura.md`
 - `docs/prd.md`
-- `docs/mapa.md`
+- `docs/artifacts/mapa.md`

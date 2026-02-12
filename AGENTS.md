@@ -11,6 +11,6 @@ O guia que o agente do Cursor usa para rodar o projeto e seguir as convenções 
 
 - **Rodar o projeto:** Ver `docs/desenvolvimento-local.md`. Em resumo: `cp .env.example .env`, `docker-compose up -d`, `npm run dev`.
 - **Estrutura:** Next.js App Router em `src/app/`; banco com Drizzle em `src/db/schema/`; documentação em `docs/`.
-- **Documentação de produto/arquitetura:** `docs/prd.md`, `docs/arquitetura.md`, `docs/mapa.md`.
+- **Documentação de produto/arquitetura:** `docs/prd.md`, `docs/arquitetura.md`, `docs/artifacts/mapa.md`.
 
 Este arquivo (`AGENTS.md`) é uma referência; a fonte que o agente usa de fato é `.cursor/rules/project-guide.mdc`.
