@@ -66,7 +66,7 @@ export async function getPublicDrawBySlugAndId(
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, drawId))
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)))
     .orderBy(asc(apartments.number));
 
   const createdAt = new Date(draw.createdAt);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
 
@@ -14,17 +14,17 @@ export function BlocksTab({ tenantId }: { tenantId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     fetch(`/api/admin/tenants/${tenantId}/blocks`)
       .then((r) => r.json())
       .then((data) => setBlocks(Array.isArray(data) ? data : []))
       .catch(() => setBlocks([]))
       .finally(() => setLoading(false));
-  };
+  }, [tenantId]);
 
   useEffect(() => {
     load();
-  }, [tenantId]);
+  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);

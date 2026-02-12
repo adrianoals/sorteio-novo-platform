@@ -4,7 +4,7 @@ import {
   parkingSpots,
   type ApartmentRightsList,
 } from "@/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export type DrawSlotType = "simple" | "double";
 
@@ -17,15 +17,18 @@ export interface RunDrawS1Result {
   results: DrawAssignment[];
 }
 
+type DrawDbExecutor = Pick<typeof db, "select">;
+
 /**
  * Expande rights em lista de tipos de slot: simple -> 1 slot, double -> 1, two_simple -> 2 slots simples.
  */
 function expandRightsToSlotTypes(rights: ApartmentRightsList): DrawSlotType[] {
   const out: DrawSlotType[] = [];
   for (const r of rights) {
-    if (r === "simple" || r === "moto" || r === "car") out.push("simple"); // "car" legado: tratar como simples
-    else if (r === "double") out.push("double");
-    else if (r === "two_simple") {
+    const right = r as string;
+    if (right === "simple" || right === "moto" || right === "car") out.push("simple"); // "car" legado: tratar como simples
+    else if (right === "double") out.push("double");
+    else if (right === "two_simple") {
       out.push("simple");
       out.push("simple");
     }
@@ -56,10 +59,37 @@ function spotEligibleForApartment(
   return true;
 }
 
-function shuffle<T>(arr: T[]): T[] {
+function xmur3(seed: string) {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+
+function mulberry32(a: number) {
+  return () => {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function createSeededRandom(seed: string): () => number {
+  const seedGen = xmur3(seed);
+  return mulberry32(seedGen());
+}
+
+function shuffleWithRng<T>(arr: T[], random: () => number): T[] {
   const out = [...arr];
   for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
@@ -70,8 +100,13 @@ function shuffle<T>(arr: T[]): T[] {
  * Usa apenas vagas não travadas (apartment_id nulo) e demanda pendente por apartamento
  * (direitos menos vagas já atribuídas a ele). Não persiste; retorna apenas os pares (apartmentId, spotId).
  */
-export async function runDrawS1(tenantId: string): Promise<RunDrawS1Result> {
-  const aptList = await db
+export async function runDrawS1(
+  tenantId: string,
+  options?: { seed?: string; executor?: DrawDbExecutor }
+): Promise<RunDrawS1Result> {
+  const executor = options?.executor ?? db;
+
+  const aptList = await executor
     .select({
       id: apartments.id,
       rights: apartments.rights,
@@ -81,7 +116,7 @@ export async function runDrawS1(tenantId: string): Promise<RunDrawS1Result> {
     .from(apartments)
     .where(eq(apartments.tenantId, tenantId));
 
-  const allSpots = await db
+  const allSpots = await executor
     .select({
       id: parkingSpots.id,
       spotType: parkingSpots.spotType,
@@ -128,8 +163,9 @@ export async function runDrawS1(tenantId: string): Promise<RunDrawS1Result> {
     }
   }
 
-  const shuffledSlots = shuffle(pendingSlots);
-  const spotPool = shuffle(availableSpots);
+  const random = options?.seed ? createSeededRandom(options.seed) : Math.random;
+  const shuffledSlots = shuffleWithRng(pendingSlots, random);
+  const spotPool = shuffleWithRng(availableSpots, random);
   const usedSpotIds = new Set<string>();
   const results: DrawAssignment[] = [];
 

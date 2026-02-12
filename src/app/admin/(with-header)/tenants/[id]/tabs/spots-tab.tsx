@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = { id: string; number: string; blockId: string | null };
@@ -81,7 +81,7 @@ export function SpotsTab({
   const basements = config?.basements ?? [];
   const hasBasement = !!config?.has_basement;
 
-  const load = () => {
+  const load = useCallback(() => {
     Promise.all([
       fetch(`/api/admin/tenants/${tenantId}/spots`).then((r) => r.json()),
       hasBlocks ? fetch(`/api/admin/tenants/${tenantId}/blocks`).then((r) => r.json()) : Promise.resolve([]),
@@ -98,11 +98,11 @@ export function SpotsTab({
         setApartments([]);
       })
       .finally(() => setLoading(false));
-  };
+  }, [tenantId, hasBlocks]);
 
   useEffect(() => {
     load();
-  }, [tenantId, hasBlocks]);
+  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -225,11 +225,11 @@ export function SpotsTab({
     }
   };
 
-  const blockName = (blockId: string | null) => {
+  const blockName = useCallback((blockId: string | null) => {
     if (!blockId) return "—";
     const b = blocks.find((x) => x.id === blockId);
     return b ? b.name : blockId;
-  };
+  }, [blocks]);
 
   const displayedSpots = useMemo(() => {
     let list = spots;
@@ -261,7 +261,7 @@ export function SpotsTab({
       return cmp(v);
     });
     return list;
-  }, [spots, filterBlockId, filterBasement, filterSpotType, filterSpecialType, sortBy, sortDir, blocks]);
+  }, [spots, filterBlockId, filterBasement, filterSpotType, filterSpecialType, sortBy, sortDir, blockName]);
 
   const toggleSelectAll = () => {
     if (selectedIds.size === displayedSpots.length) setSelectedIds(new Set());
@@ -294,8 +294,6 @@ export function SpotsTab({
   };
 
   if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
-
-  const spotLabel = (s: Spot) => [s.number, hasBasement && s.basement ? s.basement : null, hasBlocks && s.blockId ? blockName(s.blockId) : null].filter(Boolean).join(" · ");
 
   return (
     <div className="space-y-4">

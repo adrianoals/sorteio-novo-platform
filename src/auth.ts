@@ -68,7 +68,7 @@ const nextAuth = NextAuth({
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) ?? "admin";
+        session.user.role = (token.role as string) ?? "user";
       }
       return session;
     },

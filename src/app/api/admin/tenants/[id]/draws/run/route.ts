@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { runDrawS1 } from "@/lib/draw-engine-s1";
 import { logAudit } from "@/lib/audit";
 import { getFullDrawResults } from "@/lib/draw-results-full";
+import { randomUUID } from "crypto";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -31,39 +32,52 @@ export async function POST(
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
-  const { results } = await runDrawS1(tenantId);
-  const [draw] = await db
-    .insert(draws)
-    .values({ tenantId })
-    .returning({ id: draws.id, createdAt: draws.createdAt });
+  const randomSeed = randomUUID();
+  const actorId = session.user?.id ?? session.user?.email ?? "unknown";
 
-  if (!draw) {
+  let txResult: { draw: { id: string; createdAt: Date }; resultsCount: number };
+  try {
+    txResult = await db.transaction(async (tx) => {
+      const { results } = await runDrawS1(tenantId, { seed: randomSeed, executor: tx });
+      const [draw] = await tx
+        .insert(draws)
+        .values({ tenantId, randomSeed })
+        .returning({ id: draws.id, createdAt: draws.createdAt });
+
+      if (!draw) {
+        throw new Error("Falha ao criar registro do sorteio");
+      }
+
+      if (results.length > 0) {
+        await tx.insert(drawResults).values(
+          results.map((r) => ({
+            tenantId,
+            drawId: draw.id,
+            apartmentId: r.apartmentId,
+            spotId: r.spotId,
+          }))
+        );
+      }
+
+      return { draw, resultsCount: results.length };
+    });
+  } catch {
     return NextResponse.json(
-      { error: "Falha ao criar registro do sorteio" },
+      { error: "Falha ao executar sorteio" },
       { status: 500 }
     );
   }
 
-  if (results.length > 0) {
-    await db.insert(drawResults).values(
-      results.map((r) => ({
-        drawId: draw.id,
-        apartmentId: r.apartmentId,
-        spotId: r.spotId,
-      }))
-    );
-  }
-
-  const actorId = session.user?.id ?? session.user?.email ?? "unknown";
-  await logAudit(String(actorId), "create", "draw", draw.id, tenantId, {
-    resultCount: results.length,
+  await logAudit(String(actorId), "create", "draw", txResult.draw.id, tenantId, {
+    resultCount: txResult.resultsCount,
+    randomSeed,
   });
 
-  const resultsWithDetails = await getFullDrawResults(tenantId, draw.id);
+  const resultsWithDetails = await getFullDrawResults(tenantId, txResult.draw.id);
 
   return NextResponse.json({
-    drawId: draw.id,
-    createdAt: draw.createdAt,
+    drawId: txResult.draw.id,
+    createdAt: txResult.draw.createdAt,
     results: resultsWithDetails,
   });
 }

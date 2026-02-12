@@ -53,11 +53,11 @@ export function SorteioPageClient({
     : "";
 
   const resultsByApartment = useMemo(() => {
-    if (!draw?.results?.length) return [];
+    if (!draw || draw.results.length === 0) return [];
     return [...draw.results].sort((a, b) =>
       String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
     );
-  }, [draw?.results]);
+  }, [draw]);
 
   /** Tempo mínimo (ms) que a animação "Sorteando..." fica visível para todos os condomínios. */
   const SORTEANDO_MIN_DURATION_MS = 5000;

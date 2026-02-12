@@ -36,7 +36,7 @@ export async function getFullDrawResults(
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, drawId));
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
 
   const fromDraw: FullResultRow[] = fromDrawRows.map((r) => ({
     apartmentNumber: r.apartmentNumber,
@@ -60,8 +60,12 @@ export async function getFullDrawResults(
     .from(parkingSpots)
     .innerJoin(apartments, eq(parkingSpots.apartmentId, apartments.id))
     .where(
-    and(eq(parkingSpots.tenantId, tenantId), isNotNull(parkingSpots.apartmentId))
-  );
+      and(
+        eq(parkingSpots.tenantId, tenantId),
+        eq(apartments.tenantId, tenantId),
+        isNotNull(parkingSpots.apartmentId)
+      )
+    );
 
   const preAssignedOnly: FullResultRow[] = preAssignedRows
     .filter((r) => !drawnApartmentIds.has(r.apartmentId))

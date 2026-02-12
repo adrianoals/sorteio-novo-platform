@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 type Tenant = {
@@ -18,7 +18,7 @@ export function TenantList() {
   const [deleteModal, setDeleteModal] = useState<Tenant | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
+  const load = useCallback(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (statusFilter) params.set("status", statusFilter);
@@ -28,12 +28,12 @@ export function TenantList() {
         setTenants(Array.isArray(data) ? data : []);
       })
       .catch(() => setTenants([]));
-  }
+  }, [search, statusFilter]);
 
   useEffect(() => {
     setLoading(true);
     load().finally(() => setLoading(false));
-  }, [search, statusFilter]);
+  }, [load]);
 
   async function confirmExcluir() {
     if (!deleteModal) return;

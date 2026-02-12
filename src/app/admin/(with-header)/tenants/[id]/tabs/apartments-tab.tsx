@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = {
@@ -64,7 +64,7 @@ export function ApartmentsTab({
     }
   };
 
-  const load = () => {
+  const load = useCallback(() => {
     Promise.all([
       fetch(`/api/admin/tenants/${tenantId}/apartments`).then((r) => r.json()),
       hasBlocks ? fetch(`/api/admin/tenants/${tenantId}/blocks`).then((r) => r.json()) : Promise.resolve([]),
@@ -78,11 +78,11 @@ export function ApartmentsTab({
         setBlocks([]);
       })
       .finally(() => setLoading(false));
-  };
+  }, [tenantId, hasBlocks]);
 
   useEffect(() => {
     load();
-  }, [tenantId, hasBlocks]);
+  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -240,11 +240,11 @@ export function ApartmentsTab({
     }
   };
 
-  const blockName = (blockId: string | null) => {
+  const blockName = useCallback((blockId: string | null) => {
     if (!blockId) return "—";
     const b = blocks.find((x) => x.id === blockId);
     return b ? b.name : blockId;
-  };
+  }, [blocks]);
 
   const rightsLabel = (a: Apartment) =>
     (Array.isArray(a.rights) ? a.rights : [a.rights])
@@ -269,7 +269,7 @@ export function ApartmentsTab({
       return cmp(v);
     });
     return list;
-  }, [apartments, filterBlockId, sortBy, sortDir, blocks]);
+  }, [apartments, filterBlockId, sortBy, sortDir, blockName]);
 
   const toggleSelectAll = () => {
     if (selectedIds.size === displayedApartments.length) setSelectedIds(new Set());

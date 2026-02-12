@@ -25,7 +25,21 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    fetch(`/api/admin/tenants/${tenantId}/draws`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setDraws(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDraws([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [tenantId]);
 
   function confirmExcluir() {

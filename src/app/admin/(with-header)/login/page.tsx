@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -37,9 +38,11 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-b from-[#5936CC] to-[#3F228D] p-4">
-      <img
+      <Image
         src="/images/LogoSorteioTrasparente.png"
         alt="Sorteio Novo"
+        width={240}
+        height={64}
         className="h-16 w-auto object-contain mb-6"
       />
       <div className="w-full max-w-sm rounded-xl bg-[#faf9ff] p-8 shadow-xl border border-[#e2deeb]">

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 export async function proxy(request: NextRequest) {
   const session = await auth();
   const isLoggedIn = !!session?.user;
+  const isAdmin = session?.user?.role === "admin";
   const { nextUrl } = request;
 
   // Public: login page and auth API
@@ -22,12 +23,18 @@ export async function proxy(request: NextRequest) {
       login.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search);
       return NextResponse.redirect(login);
     }
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/", nextUrl.origin));
+    }
   }
 
   // Protect /api/admin/*
   if (nextUrl.pathname.startsWith("/api/admin")) {
     if (!isLoggedIn) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
 

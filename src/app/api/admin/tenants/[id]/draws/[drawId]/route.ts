@@ -55,7 +55,7 @@ export async function GET(
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, drawId));
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
 
   return NextResponse.json({
     id: draw.id,
@@ -99,7 +99,9 @@ export async function DELETE(
   }
 
   try {
-    await db.delete(drawResults).where(eq(drawResults.drawId, drawId));
+    await db
+      .delete(drawResults)
+      .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
     await db.delete(draws).where(eq(draws.id, drawId));
   } catch (err) {
     console.error("Delete draw error:", err);

@@ -86,7 +86,7 @@ export async function GET(
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
     .leftJoin(blocks, eq(apartments.blockId, blocks.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(eq(drawResults.drawId, drawId))
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)))
     .orderBy(asc(apartments.number));
 
   const hasBlocks = !!config?.has_blocks;

@@ -39,6 +39,7 @@ export async function GET(
       count: sql<number>`count(*)::int`.as("count"),
     })
     .from(drawResults)
+    .where(eq(drawResults.tenantId, tenantId))
     .groupBy(drawResults.drawId);
 
   const countMap = new Map(counts.map((c) => [c.drawId, c.count]));

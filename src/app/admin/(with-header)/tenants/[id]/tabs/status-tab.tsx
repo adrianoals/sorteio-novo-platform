@@ -50,7 +50,21 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    fetch(`/api/admin/tenants/${tenantId}/checks`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setResult(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Erro ao carregar.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [tenantId]);
 
   if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;

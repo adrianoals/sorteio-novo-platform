@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { TenantConfigTab } from "./tabs/config-tab";
 import { BlocksTab } from "./tabs/blocks-tab";
 import { ApartmentsTab } from "./tabs/apartments-tab";

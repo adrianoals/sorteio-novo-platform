@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { tenants, blocks } from "@/db/schema";
+import { blocks } from "@/db/schema";
 import { updateBlockSchema } from "@/lib/validations/blocks";
 import { logAudit } from "@/lib/audit";
 import { and, eq } from "drizzle-orm";
