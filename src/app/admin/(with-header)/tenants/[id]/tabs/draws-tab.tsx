@@ -17,7 +17,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
 
   const load = () => {
     setLoading(true);
-    return fetch(`/api/admin/tenants/${tenantId}/draws`)
+    return fetch(`/api/admin/tenants/${tenantId}/draws`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => setDraws(Array.isArray(data) ? data : []))
       .catch(() => setDraws([]))
@@ -25,21 +25,8 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
   };
 
   useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/admin/tenants/${tenantId}/draws`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setDraws(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (!cancelled) setDraws([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
   function confirmExcluir() {

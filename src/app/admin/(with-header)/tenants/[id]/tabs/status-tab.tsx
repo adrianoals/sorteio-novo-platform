@@ -47,7 +47,7 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
   const load = () => {
     setLoading(true);
     setError(null);
-    fetch(`/api/admin/tenants/${tenantId}/checks`)
+    return fetch(`/api/admin/tenants/${tenantId}/checks`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => setResult(data))
       .catch(() => setError("Erro ao carregar."))
@@ -55,21 +55,8 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
   };
 
   useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/admin/tenants/${tenantId}/checks`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setResult(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Erro ao carregar.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
   if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;

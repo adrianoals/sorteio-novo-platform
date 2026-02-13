@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TenantConfigTab } from "./tabs/config-tab";
 import { BlocksTab } from "./tabs/blocks-tab";
 import { ApartmentsTab } from "./tabs/apartments-tab";
@@ -35,6 +35,23 @@ const TABS = [
 
 export function TenantTabs({ tenant }: { tenant: Tenant }) {
   const [active, setActive] = useState<(typeof TABS)[number]["id"]>("config");
+  const [mountedTabs, setMountedTabs] = useState<Set<(typeof TABS)[number]["id"]>>(
+    () => new Set(["config"])
+  );
+
+  const activateTab = (tabId: (typeof TABS)[number]["id"]) => {
+    setActive(tabId);
+    setMountedTabs((prev) => {
+      if (prev.has(tabId)) return prev;
+      const next = new Set(prev);
+      next.add(tabId);
+      return next;
+    });
+  };
+
+  const hasBlocks = !!tenant.config?.has_blocks;
+  const hasBasement = !!tenant.config?.has_basement;
+  const basements = useMemo(() => tenant.config?.basements ?? [], [tenant.config?.basements]);
 
   return (
     <div>
@@ -47,7 +64,7 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActive(tab.id)}
+                onClick={() => activateTab(tab.id)}
                 className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                   active === tab.id
                     ? "border-[#5936CC] text-[#250E62]"
@@ -61,20 +78,46 @@ export function TenantTabs({ tenant }: { tenant: Tenant }) {
         </nav>
       </div>
       <div className="mt-6">
-        {active === "config" && <TenantConfigTab tenant={tenant} />}
-        {active === "blocks" && <BlocksTab tenantId={tenant.id} />}
-        {active === "apartments" && (
-          <ApartmentsTab
-            tenantId={tenant.id}
-            hasBlocks={!!tenant.config?.has_blocks}
-            hasBasement={!!tenant.config?.has_basement}
-            basements={tenant.config?.basements ?? []}
-          />
+        {mountedTabs.has("config") && (
+          <div className={active === "config" ? "block" : "hidden"}>
+            <TenantConfigTab tenant={tenant} />
+          </div>
         )}
-        {active === "spots" && <SpotsTab tenantId={tenant.id} hasBlocks={!!tenant.config?.has_blocks} config={tenant.config} />}
-        {active === "import" && <ImportTab tenant={tenant} />}
-        {active === "draws" && <DrawsTab tenantId={tenant.id} />}
-        {active === "status" && <StatusTab tenantId={tenant.id} />}
+        {hasBlocks && mountedTabs.has("blocks") && (
+          <div className={active === "blocks" ? "block" : "hidden"}>
+            <BlocksTab tenantId={tenant.id} />
+          </div>
+        )}
+        {mountedTabs.has("apartments") && (
+          <div className={active === "apartments" ? "block" : "hidden"}>
+            <ApartmentsTab
+              tenantId={tenant.id}
+              hasBlocks={hasBlocks}
+              hasBasement={hasBasement}
+              basements={basements}
+            />
+          </div>
+        )}
+        {mountedTabs.has("spots") && (
+          <div className={active === "spots" ? "block" : "hidden"}>
+            <SpotsTab tenantId={tenant.id} hasBlocks={hasBlocks} config={tenant.config} />
+          </div>
+        )}
+        {mountedTabs.has("import") && (
+          <div className={active === "import" ? "block" : "hidden"}>
+            <ImportTab tenant={tenant} />
+          </div>
+        )}
+        {mountedTabs.has("draws") && (
+          <div className={active === "draws" ? "block" : "hidden"}>
+            <DrawsTab tenantId={tenant.id} />
+          </div>
+        )}
+        {mountedTabs.has("status") && (
+          <div className={active === "status" ? "block" : "hidden"}>
+            <StatusTab tenantId={tenant.id} />
+          </div>
+        )}
       </div>
     </div>
   );

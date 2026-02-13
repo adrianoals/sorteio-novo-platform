@@ -1,5 +1,4 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { tenants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -10,11 +9,6 @@ export default async function SorteioPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/admin/login?callbackUrl=/admin/tenants");
-  }
-
   const { id } = await params;
   const [tenant] = await db
     .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })

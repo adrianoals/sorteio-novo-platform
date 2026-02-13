@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/auth";
 import { db } from "@/db";
 import { tenants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,7 +10,6 @@ export default async function TenantDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await auth();
   const { id } = await params;
   const [tenant] = await db
     .select()
