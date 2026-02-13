@@ -82,15 +82,15 @@ export function SpotsTab({
   const hasBasement = !!config?.has_basement;
 
   const load = useCallback(() => {
-    Promise.all([
-      fetch(`/api/admin/tenants/${tenantId}/spots`).then((r) => r.json()),
-      hasBlocks ? fetch(`/api/admin/tenants/${tenantId}/blocks`).then((r) => r.json()) : Promise.resolve([]),
-      fetch(`/api/admin/tenants/${tenantId}/apartments`).then((r) => r.json()),
-    ])
-      .then(([sps, blks, apts]) => {
-        setSpots(Array.isArray(sps) ? sps : []);
-        setBlocks(Array.isArray(blks) ? blks : []);
-        setApartments(Array.isArray(apts) ? apts : []);
+    fetch(`/api/admin/tenants/${tenantId}/spots/context`)
+      .then((r) => r.json())
+      .then((data) => {
+        const sps = Array.isArray(data?.spots) ? data.spots : [];
+        const blks = Array.isArray(data?.blocks) ? data.blocks : [];
+        const apts = Array.isArray(data?.apartments) ? data.apartments : [];
+        setSpots(sps);
+        setBlocks(hasBlocks ? blks : []);
+        setApartments(apts);
       })
       .catch(() => {
         setSpots([]);

@@ -65,13 +65,13 @@ export function ApartmentsTab({
   };
 
   const load = useCallback(() => {
-    Promise.all([
-      fetch(`/api/admin/tenants/${tenantId}/apartments`).then((r) => r.json()),
-      hasBlocks ? fetch(`/api/admin/tenants/${tenantId}/blocks`).then((r) => r.json()) : Promise.resolve([]),
-    ])
-      .then(([apts, blks]) => {
-        setApartments(Array.isArray(apts) ? apts : []);
-        setBlocks(Array.isArray(blks) ? blks : []);
+    fetch(`/api/admin/tenants/${tenantId}/apartments/context`)
+      .then((r) => r.json())
+      .then((data) => {
+        const apts = Array.isArray(data?.apartments) ? data.apartments : [];
+        const blks = Array.isArray(data?.blocks) ? data.blocks : [];
+        setApartments(apts);
+        setBlocks(hasBlocks ? blks : []);
       })
       .catch(() => {
         setApartments([]);
