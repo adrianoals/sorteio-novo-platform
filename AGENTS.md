@@ -14,3 +14,7 @@ O guia que o agente do Cursor usa para rodar o projeto e seguir as convenções 
 - **Documentação de produto/arquitetura:** `docs/prd.md`, `docs/arquitetura.md`, `docs/artifacts/mapa.md`.
 
 Este arquivo (`AGENTS.md`) é uma referência; a fonte que o agente usa de fato é `.cursor/rules/project-guide.mdc`.
+
+
+
+codex resume 019c53c0-144a-7ab3-a41a-2eaca2dbd289
