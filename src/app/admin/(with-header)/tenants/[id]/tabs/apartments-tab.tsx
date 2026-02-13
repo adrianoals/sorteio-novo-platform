@@ -224,14 +224,12 @@ export function ApartmentsTab({
     if (ids.length === 0) return;
     setBulkDeleting(true);
     try {
-      await Promise.all(
-        ids.map((id) =>
-          fetch(`/api/admin/tenants/${tenantId}/apartments/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          })
-        )
-      );
+      for (const id of ids) {
+        await fetch(`/api/admin/tenants/${tenantId}/apartments/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      }
       setBulkDeleteModalOpen(false);
       setSelectedIds(new Set());
       load();
