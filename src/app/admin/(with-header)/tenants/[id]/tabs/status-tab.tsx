@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr";
 
 type ChecksResult = {
   ok: boolean;
@@ -40,27 +41,13 @@ function labelSpotType(k: string): string {
 }
 
 export function StatusTab({ tenantId }: { tenantId: string }) {
-  const [result, setResult] = useState<ChecksResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: result, error, isLoading, mutate } = useSWR<ChecksResult>(
+    `/api/admin/tenants/${tenantId}/checks`,
+    fetcher
+  );
 
-  const load = () => {
-    setLoading(true);
-    setError(null);
-    return fetch(`/api/admin/tenants/${tenantId}/checks`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => setResult(data))
-      .catch(() => setError("Erro ao carregar."))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantId]);
-
-  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (isLoading) return <p className="text-[#5b4d7a]">Carregando…</p>;
+  if (error) return <p className="text-red-600">Erro ao carregar.</p>;
   if (!result) return null;
 
   return (
@@ -69,7 +56,7 @@ export function StatusTab({ tenantId }: { tenantId: string }) {
         <h3 className="font-medium text-[#250E62]">Status e prontidão</h3>
         <button
           type="button"
-          onClick={load}
+          onClick={() => mutate()}
           className="text-sm text-[#5936CC] hover:text-[#250E62] underline"
         >
           Atualizar

@@ -8,36 +8,35 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-async function ensureTenant(tenantId: string) {
-  const [t] = await db
-    .select()
-    .from(tenants)
-    .where(eq(tenants.id, tenantId))
-    .limit(1);
-  return t ?? null;
-}
-
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: tenantId } = await params;
-  const tenant = await ensureTenant(tenantId);
+
+  const [tenantRows, aptList, spotList] = await Promise.all([
+    db
+      .select()
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1),
+    db
+      .select()
+      .from(apartments)
+      .where(eq(apartments.tenantId, tenantId)),
+    db
+      .select()
+      .from(parkingSpots)
+      .where(eq(parkingSpots.tenantId, tenantId)),
+  ]);
+
+  const tenant = tenantRows[0];
   if (!tenant) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
   const warnings: string[] = [];
   const errors: string[] = [];
-
-  const aptList = await db
-    .select()
-    .from(apartments)
-    .where(eq(apartments.tenantId, tenantId));
-  const spotList = await db
-    .select()
-    .from(parkingSpots)
-    .where(eq(parkingSpots.tenantId, tenantId));
 
   const totalApts = aptList.length;
   const totalSpots = spotList.length;
@@ -164,21 +163,28 @@ export async function GET(
   const okForSimpleDraw =
     ok && totalApts > 0 && totalSpots > 0 && warnings.length === 0;
 
-  return NextResponse.json({
-    ok,
-    okForSimpleDraw,
-    warnings,
-    errors,
-    counts: {
-      apartments: totalApts,
-      spots: totalSpots,
-      apartmentsByRights: rightsCount,
-      spotsByType: spotTypeCount,
-      rightsSlotsTotal: totalRightsSlots,
-      spotSlotsTotal: totalProvidedSlots,
-      slotBalance,
-      apartmentsWithMultipleSlots,
-      extraSlotsFromMulti,
+  return NextResponse.json(
+    {
+      ok,
+      okForSimpleDraw,
+      warnings,
+      errors,
+      counts: {
+        apartments: totalApts,
+        spots: totalSpots,
+        apartmentsByRights: rightsCount,
+        spotsByType: spotTypeCount,
+        rightsSlotsTotal: totalRightsSlots,
+        spotSlotsTotal: totalProvidedSlots,
+        slotBalance,
+        apartmentsWithMultipleSlots,
+        extraSlotsFromMulti,
+      },
     },
-  });
+    {
+      headers: {
+        "Cache-Control": "private, s-maxage=15, stale-while-revalidate=30",
+      },
+    }
+  );
 }

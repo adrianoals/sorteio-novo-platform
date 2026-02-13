@@ -34,7 +34,11 @@ export async function GET(
     .from(blocks)
     .where(eq(blocks.tenantId, tenantId))
     .orderBy(blocks.name);
-  return NextResponse.json(list);
+  return NextResponse.json(list, {
+    headers: {
+      "Cache-Control": "private, s-maxage=30, stale-while-revalidate=60",
+    },
+  });
 }
 
 export async function POST(

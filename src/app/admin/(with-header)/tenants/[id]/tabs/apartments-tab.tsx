@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = {
@@ -29,9 +31,14 @@ export function ApartmentsTab({
   hasBasement: boolean;
   basements: string[];
 }) {
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, mutate, isLoading } = useSWR<{ apartments: Apartment[]; blocks: Block[] }>(
+    `/api/admin/tenants/${tenantId}/apartments/context`,
+    fetcher
+  );
+
+  const apartments = Array.isArray(data?.apartments) ? data.apartments : [];
+  const blocks = hasBlocks && Array.isArray(data?.blocks) ? data.blocks : [];
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formNumber, setFormNumber] = useState("");
@@ -63,26 +70,6 @@ export function ApartmentsTab({
       setSortDir("asc");
     }
   };
-
-  const load = useCallback(() => {
-    fetch(`/api/admin/tenants/${tenantId}/apartments/context`)
-      .then((r) => r.json())
-      .then((data) => {
-        const apts = Array.isArray(data?.apartments) ? data.apartments : [];
-        const blks = Array.isArray(data?.blocks) ? data.blocks : [];
-        setApartments(apts);
-        setBlocks(hasBlocks ? blks : []);
-      })
-      .catch(() => {
-        setApartments([]);
-        setBlocks([]);
-      })
-      .finally(() => setLoading(false));
-  }, [tenantId, hasBlocks]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -158,24 +145,22 @@ export function ApartmentsTab({
       const allowedSubsolos = hasBasement && formAllowedSubsolos.length ? formAllowedSubsolos : null;
       const allowedBlocks = hasBlocks && formAllowedBlocks.length ? formAllowedBlocks : null;
       const blockId = hasBlocks ? (formBlockId || null) : null;
-      const body = editingId
-        ? { number: formNumber, blockId, rights, allowedSubsolos, allowedBlocks }
-        : { number: formNumber, blockId, rights, allowedSubsolos, allowedBlocks };
+      const body = { number: formNumber, blockId, rights, allowedSubsolos, allowedBlocks };
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         credentials: "include",
       });
-      const data = await res.json().catch(() => ({}));
+      const resData = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg = data.error ?? (data.details ? JSON.stringify(data.details) : null) ?? "Erro ao salvar.";
+        const msg = resData.error ?? (resData.details ? JSON.stringify(resData.details) : null) ?? "Erro ao salvar.";
         setError(typeof msg === "string" ? msg : "Erro ao salvar.");
         setSaving(false);
         return;
       }
       closeForm();
-      load();
+      mutate();
     } catch {
       setError("Erro de conexão.");
     }
@@ -193,7 +178,7 @@ export function ApartmentsTab({
       if (res.ok) {
         closeDeleteModal();
         closeForm();
-        load();
+        mutate();
         setSelectedIds((prev) => {
           const next = new Set(prev);
           next.delete(deleteModalApartment.id);
@@ -231,13 +216,13 @@ export function ApartmentsTab({
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error ?? "Erro ao remover apartamentos.");
+        const resData = await res.json().catch(() => ({}));
+        alert(resData.error ?? "Erro ao remover apartamentos.");
         return;
       }
       setBulkDeleteModalOpen(false);
       setSelectedIds(new Set());
-      load();
+      mutate();
     } finally {
       setBulkDeleting(false);
     }
@@ -388,7 +373,7 @@ export function ApartmentsTab({
     </>
   );
 
-  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
+  if (isLoading) return <p className="text-[#5b4d7a]">Carregando…</p>;
 
   return (
     <div className="space-y-4">

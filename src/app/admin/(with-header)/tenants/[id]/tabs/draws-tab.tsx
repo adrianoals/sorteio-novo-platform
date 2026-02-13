@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr";
 
 type DrawItem = {
   id: string;
@@ -10,24 +12,15 @@ type DrawItem = {
 };
 
 export function DrawsTab({ tenantId }: { tenantId: string }) {
-  const [draws, setDraws] = useState<DrawItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, mutate, isLoading } = useSWR<DrawItem[]>(
+    `/api/admin/tenants/${tenantId}/draws`,
+    fetcher
+  );
+
+  const draws = Array.isArray(data) ? data : [];
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteModalDraw, setDeleteModalDraw] = useState<DrawItem | null>(null);
-
-  const load = () => {
-    setLoading(true);
-    return fetch(`/api/admin/tenants/${tenantId}/draws`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => setDraws(Array.isArray(data) ? data : []))
-      .catch(() => setDraws([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantId]);
 
   function confirmExcluir() {
     if (!deleteModalDraw) return;
@@ -40,10 +33,10 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
       .then(async (r) => {
         if (r.ok) {
           setDeleteModalDraw(null);
-          await load();
+          mutate();
         } else {
-          const data = await r.json().catch(() => ({}));
-          alert(data.error ?? "Não foi possível excluir o sorteio. Tente novamente.");
+          const resData = await r.json().catch(() => ({}));
+          alert(resData.error ?? "Não foi possível excluir o sorteio. Tente novamente.");
         }
       })
       .catch(() => {
@@ -110,7 +103,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
         </div>
       )}
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-[#5b4d7a]">Carregando…</p>
       ) : draws.length === 0 ? (
         <p className="text-[#5b4d7a]">Nenhum sorteio realizado ainda.</p>

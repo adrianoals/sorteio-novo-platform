@@ -1,30 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr";
 
 type Block = { id: string; name: string; code: string | null };
 
 export function BlocksTab({ tenantId }: { tenantId: string }) {
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, mutate, isLoading } = useSWR<Block[]>(
+    `/api/admin/tenants/${tenantId}/blocks`,
+    fetcher
+  );
+
+  const blocks = Array.isArray(data) ? data : [];
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState("");
   const [formCode, setFormCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(() => {
-    fetch(`/api/admin/tenants/${tenantId}/blocks`)
-      .then((r) => r.json())
-      .then((data) => setBlocks(Array.isArray(data) ? data : []))
-      .catch(() => setBlocks([]))
-      .finally(() => setLoading(false));
-  }, [tenantId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -57,22 +52,20 @@ export function BlocksTab({ tenantId }: { tenantId: string }) {
         ? `/api/admin/tenants/${tenantId}/blocks/${editingId}`
         : `/api/admin/tenants/${tenantId}/blocks`;
       const method = editingId ? "PATCH" : "POST";
-      const body = editingId
-        ? { name: formName, code: formCode || null }
-        : { name: formName, code: formCode || null };
+      const body = { name: formName, code: formCode || null };
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      const resData = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Erro ao salvar.");
+        setError(resData.error ?? "Erro ao salvar.");
         setSaving(false);
         return;
       }
       closeForm();
-      load();
+      mutate();
     } catch {
       setError("Erro de conexão.");
     }
@@ -87,11 +80,11 @@ export function BlocksTab({ tenantId }: { tenantId: string }) {
     );
     if (res.ok) {
       closeForm();
-      load();
+      mutate();
     }
   };
 
-  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
+  if (isLoading) return <p className="text-[#5b4d7a]">Carregando…</p>;
 
   return (
     <div className="space-y-4">

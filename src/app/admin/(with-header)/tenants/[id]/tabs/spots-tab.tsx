@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/swr";
 
 type Block = { id: string; name: string; code: string | null };
 type Apartment = { id: string; number: string; blockId: string | null };
@@ -42,10 +44,16 @@ export function SpotsTab({
   hasBlocks: boolean;
   config?: { has_basement?: boolean; basements?: string[] } | null;
 }) {
-  const [spots, setSpots] = useState<Spot[]>([]);
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, mutate, isLoading } = useSWR<{
+    spots: Spot[];
+    blocks: Block[];
+    apartments: Apartment[];
+  }>(`/api/admin/tenants/${tenantId}/spots/context`, fetcher);
+
+  const spots = Array.isArray(data?.spots) ? data.spots : [];
+  const blocks = hasBlocks && Array.isArray(data?.blocks) ? data.blocks : [];
+  const apartments = Array.isArray(data?.apartments) ? data.apartments : [];
+
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -80,29 +88,6 @@ export function SpotsTab({
 
   const basements = config?.basements ?? [];
   const hasBasement = !!config?.has_basement;
-
-  const load = useCallback(() => {
-    fetch(`/api/admin/tenants/${tenantId}/spots/context`)
-      .then((r) => r.json())
-      .then((data) => {
-        const sps = Array.isArray(data?.spots) ? data.spots : [];
-        const blks = Array.isArray(data?.blocks) ? data.blocks : [];
-        const apts = Array.isArray(data?.apartments) ? data.apartments : [];
-        setSpots(sps);
-        setBlocks(hasBlocks ? blks : []);
-        setApartments(apts);
-      })
-      .catch(() => {
-        setSpots([]);
-        setBlocks([]);
-        setApartments([]);
-      })
-      .finally(() => setLoading(false));
-  }, [tenantId, hasBlocks]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -153,14 +138,14 @@ export function SpotsTab({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      const resData = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Erro ao salvar.");
+        setError(resData.error ?? "Erro ao salvar.");
         setSaving(false);
         return;
       }
       closeForm();
-      load();
+      mutate();
     } catch {
       setError("Erro de conexão.");
     }
@@ -178,7 +163,7 @@ export function SpotsTab({
       if (res.ok) {
         setDeleteModalSpot(null);
         closeForm();
-        load();
+        mutate();
         setSelectedIds((prev) => {
           const next = new Set(prev);
           next.delete(deleteModalSpot.id);
@@ -216,13 +201,13 @@ export function SpotsTab({
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error ?? "Erro ao remover vagas.");
+        const resData = await res.json().catch(() => ({}));
+        alert(resData.error ?? "Erro ao remover vagas.");
         return;
       }
       setBulkDeleteModalOpen(false);
       setSelectedIds(new Set());
-      load();
+      mutate();
     } finally {
       setBulkDeleting(false);
     }
@@ -285,10 +270,10 @@ export function SpotsTab({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apartmentId }),
       });
-      if (res.ok) load();
+      if (res.ok) mutate();
       else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error ?? "Erro ao atribuir.");
+        const resData = await res.json().catch(() => ({}));
+        alert(resData.error ?? "Erro ao atribuir.");
       }
     } catch {
       alert("Erro de conexão.");
@@ -296,7 +281,7 @@ export function SpotsTab({
     setAssigningId(null);
   };
 
-  if (loading) return <p className="text-[#5b4d7a]">Carregando…</p>;
+  if (isLoading) return <p className="text-[#5b4d7a]">Carregando…</p>;
 
   return (
     <div className="space-y-4">
