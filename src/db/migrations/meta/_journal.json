@@ -43,6 +43,13 @@
       "when": 1770935242194,
       "tag": "0005_mute_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771022400000,
+      "tag": "0006_swift_pool_indexes",
+      "breakpoints": true
     }
   ]
 }
