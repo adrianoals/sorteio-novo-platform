@@ -24,19 +24,41 @@ export async function getFullDrawResults(
   tenantId: string,
   drawId: string
 ): Promise<FullResultRow[]> {
-  const fromDrawRows = await db
-    .select({
-      apartmentId: apartments.id,
-      apartmentNumber: apartments.number,
-      spotNumber: parkingSpots.number,
-      spotBasement: parkingSpots.basement,
-      spotType: parkingSpots.spotType,
-      spotSpecialType: parkingSpots.specialType,
-    })
-    .from(drawResults)
-    .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
-    .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
+  const [fromDrawRows, preAssignedRows] = await Promise.all([
+    db
+      .select({
+        apartmentId: apartments.id,
+        apartmentNumber: apartments.number,
+        spotNumber: parkingSpots.number,
+        spotBasement: parkingSpots.basement,
+        spotType: parkingSpots.spotType,
+        spotSpecialType: parkingSpots.specialType,
+      })
+      .from(drawResults)
+      .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
+      .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
+      .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId))),
+    db
+      .select({
+        apartmentId: apartments.id,
+        apartmentNumber: apartments.number,
+        spotNumber: parkingSpots.number,
+        spotBasement: parkingSpots.basement,
+        spotType: parkingSpots.spotType,
+        spotSpecialType: parkingSpots.specialType,
+      })
+      .from(parkingSpots)
+      .innerJoin(apartments, eq(parkingSpots.apartmentId, apartments.id))
+      .where(
+        and(
+          eq(parkingSpots.tenantId, tenantId),
+          eq(apartments.tenantId, tenantId),
+          isNotNull(parkingSpots.apartmentId)
+        )
+      ),
+  ]);
+
+  const drawnApartmentIds = new Set(fromDrawRows.map((r) => r.apartmentId));
 
   const fromDraw: FullResultRow[] = fromDrawRows.map((r) => ({
     apartmentNumber: r.apartmentNumber,
@@ -45,27 +67,6 @@ export async function getFullDrawResults(
     spotType: r.spotType,
     spotSpecialType: r.spotSpecialType,
   }));
-
-  const drawnApartmentIds = new Set(fromDrawRows.map((r) => r.apartmentId));
-
-  const preAssignedRows = await db
-    .select({
-      apartmentId: apartments.id,
-      apartmentNumber: apartments.number,
-      spotNumber: parkingSpots.number,
-      spotBasement: parkingSpots.basement,
-      spotType: parkingSpots.spotType,
-      spotSpecialType: parkingSpots.specialType,
-    })
-    .from(parkingSpots)
-    .innerJoin(apartments, eq(parkingSpots.apartmentId, apartments.id))
-    .where(
-      and(
-        eq(parkingSpots.tenantId, tenantId),
-        eq(apartments.tenantId, tenantId),
-        isNotNull(parkingSpots.apartmentId)
-      )
-    );
 
   const preAssignedOnly: FullResultRow[] = preAssignedRows
     .filter((r) => !drawnApartmentIds.has(r.apartmentId))

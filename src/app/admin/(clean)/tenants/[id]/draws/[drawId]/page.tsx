@@ -11,27 +11,32 @@ export default async function ViewDrawPage({
 }: {
   params: Promise<{ id: string; drawId: string }>;
 }) {
-  const session = await auth();
+  const { id: tenantId, drawId } = await params;
+
+  const [session, [tenant]] = await Promise.all([
+    auth(),
+    db
+      .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1),
+  ]);
+
   if (!session?.user) {
     redirect("/admin/login?callbackUrl=/admin/tenants");
   }
-
-  const { id: tenantId, drawId } = await params;
-  const [tenant] = await db
-    .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
-    .from(tenants)
-    .where(eq(tenants.id, tenantId))
-    .limit(1);
   if (!tenant) notFound();
 
-  const [draw] = await db
-    .select()
-    .from(draws)
-    .where(and(eq(draws.id, drawId), eq(draws.tenantId, tenantId)))
-    .limit(1);
-  if (!draw) notFound();
+  const [[draw], results] = await Promise.all([
+    db
+      .select()
+      .from(draws)
+      .where(and(eq(draws.id, drawId), eq(draws.tenantId, tenantId)))
+      .limit(1),
+    getFullDrawResults(tenantId, drawId),
+  ]);
 
-  const results = await getFullDrawResults(tenantId, drawId);
+  if (!draw) notFound();
 
   return (
     <ViewDrawPageClient

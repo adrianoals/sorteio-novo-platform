@@ -46,28 +46,30 @@ export async function getPublicDrawBySlugAndId(
 
   if (!tenant) return null;
 
-  const [draw] = await db
-    .select({ id: draws.id, createdAt: draws.createdAt })
-    .from(draws)
-    .where(and(eq(draws.id, drawId), eq(draws.tenantId, tenant.id)))
-    .limit(1);
+  const [draw, results] = await Promise.all([
+    db
+      .select({ id: draws.id, createdAt: draws.createdAt })
+      .from(draws)
+      .where(and(eq(draws.id, drawId), eq(draws.tenantId, tenant.id)))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        apartmentNumber: apartments.number,
+        apartmentId: apartments.id,
+        spotNumber: parkingSpots.number,
+        spotBasement: parkingSpots.basement,
+        spotType: parkingSpots.spotType,
+        spotSpecialType: parkingSpots.specialType,
+      })
+      .from(drawResults)
+      .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
+      .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
+      .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)))
+      .orderBy(asc(apartments.number)),
+  ]);
 
   if (!draw) return null;
-
-  const results = await db
-    .select({
-      apartmentNumber: apartments.number,
-      apartmentId: apartments.id,
-      spotNumber: parkingSpots.number,
-      spotBasement: parkingSpots.basement,
-      spotType: parkingSpots.spotType,
-      spotSpecialType: parkingSpots.specialType,
-    })
-    .from(drawResults)
-    .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
-    .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)))
-    .orderBy(asc(apartments.number));
 
   const createdAt = new Date(draw.createdAt);
   const formattedDate = createdAt.toLocaleDateString("pt-BR", {
