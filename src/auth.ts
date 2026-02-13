@@ -29,11 +29,31 @@ const nextAuth = NextAuth({
         if (!credentials?.email || typeof credentials.password !== "string") {
           return null;
         }
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, String(credentials.email).trim().toLowerCase()))
-          .limit(1);
+        const email = String(credentials.email).trim().toLowerCase();
+
+        const findUserWithRetry = async () => {
+          let attempts = 0;
+          while (attempts < 3) {
+            try {
+              const [user] = await db
+                .select()
+                .from(users)
+                .where(eq(users.email, email))
+                .limit(1);
+              return user;
+            } catch (error) {
+              attempts += 1;
+              if (attempts >= 3) {
+                console.error("Auth authorize DB error:", error);
+                return null;
+              }
+              await new Promise((resolve) => setTimeout(resolve, attempts * 150));
+            }
+          }
+          return null;
+        };
+
+        const user = await findUserWithRetry();
         if (!user) {
           return null;
         }

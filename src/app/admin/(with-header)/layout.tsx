@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 
 export default async function AdminWithHeaderLayout({
   children,
@@ -8,6 +8,11 @@ export default async function AdminWithHeaderLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/admin/login" });
+  }
+
   return (
     <div className="min-h-screen bg-[#faf9ff]">
       <header className="border-b border-[#e2deeb] bg-white shadow-sm">
@@ -26,12 +31,14 @@ export default async function AdminWithHeaderLayout({
           </Link>
           <div className="flex gap-4 items-center">
             <span className="text-sm text-[#5b4d7a]">{session?.user?.email ?? ""}</span>
-            <Link
-              href="/api/auth/signout"
-              className="text-sm font-medium text-[#3F228D] hover:text-[#5936CC]"
-            >
-              Sair
-            </Link>
+            <form action={handleSignOut}>
+              <button
+                type="submit"
+                className="text-sm font-medium text-[#3F228D] hover:text-[#5936CC]"
+              >
+                Sair
+              </button>
+            </form>
           </div>
         </div>
       </header>

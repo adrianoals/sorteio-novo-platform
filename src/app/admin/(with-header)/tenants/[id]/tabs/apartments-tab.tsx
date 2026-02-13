@@ -224,11 +224,16 @@ export function ApartmentsTab({
     if (ids.length === 0) return;
     setBulkDeleting(true);
     try {
-      for (const id of ids) {
-        await fetch(`/api/admin/tenants/${tenantId}/apartments/${id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
+      const res = await fetch(`/api/admin/tenants/${tenantId}/apartments`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Erro ao remover apartamentos.");
+        return;
       }
       setBulkDeleteModalOpen(false);
       setSelectedIds(new Set());

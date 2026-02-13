@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { tenants, parkingSpots } from "@/db/schema";
 import { createSpotSchema } from "@/lib/validations/spots";
 import { logAudit } from "@/lib/audit";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -109,4 +109,45 @@ export async function POST(
   });
 
   return NextResponse.json(created, { status: 201 });
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id: tenantId } = await params;
+  if (!(await ensureTenant(tenantId))) {
+    return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const ids = Array.isArray((body as { ids?: unknown })?.ids)
+    ? (body as { ids: unknown[] }).ids.filter((id): id is string => typeof id === "string")
+    : [];
+  if (!ids.length) {
+    return NextResponse.json({ error: "No spots selected" }, { status: 400 });
+  }
+
+  const deleted = await db
+    .delete(parkingSpots)
+    .where(and(eq(parkingSpots.tenantId, tenantId), inArray(parkingSpots.id, ids)))
+    .returning({ id: parkingSpots.id });
+
+  await logAudit(String(session.user?.id ?? session.user?.email ?? "unknown"), "delete", "spot", tenantId, tenantId, {
+    bulk: true,
+    deletedCount: deleted.length,
+  });
+
+  return NextResponse.json({ deleted: deleted.length });
 }
