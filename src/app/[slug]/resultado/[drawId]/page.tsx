@@ -19,6 +19,7 @@ export default async function ResultadoPublicPage({
       <div className="max-w-2xl mx-auto">
         <ResultadoPageClient
           tenantName={data.tenantName}
+          hasBlocks={data.hasBlocks}
           createdAtFormatted={data.createdAtFormatted}
           results={data.results}
         />

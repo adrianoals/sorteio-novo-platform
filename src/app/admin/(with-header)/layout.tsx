@@ -34,7 +34,7 @@ export default async function AdminWithHeaderLayout({
             <form action={handleSignOut}>
               <button
                 type="submit"
-                className="text-sm font-medium text-[#3F228D] hover:text-[#5936CC]"
+                className="cursor-pointer rounded-lg border border-[#e2deeb] px-3 py-1.5 text-sm font-medium text-[#3F228D] transition-colors hover:bg-[#faf9ff] hover:text-[#5936CC] hover:border-[#5936CC]"
               >
                 Sair
               </button>

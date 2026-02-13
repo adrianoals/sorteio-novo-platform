@@ -5,6 +5,7 @@ import {
   drawResults,
   apartments,
   parkingSpots,
+  blocks,
 } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
 
@@ -21,12 +22,14 @@ const SPECIAL_LABELS: Record<string, string> = {
 
 export type PublicDrawResult = {
   tenantName: string;
+  hasBlocks: boolean;
   drawId: string;
   createdAt: string;
   createdAtFormatted: string;
   results: {
     apartmentNumber: string;
     apartmentId: string;
+    blockName: string;
     spotNumber: string;
     spotBasement: string;
     spotTypeLabel: string;
@@ -39,12 +42,14 @@ export async function getPublicDrawBySlugAndId(
   drawId: string
 ): Promise<PublicDrawResult | null> {
   const [tenant] = await db
-    .select({ id: tenants.id, name: tenants.name })
+    .select({ id: tenants.id, name: tenants.name, config: tenants.config })
     .from(tenants)
     .where(eq(tenants.slug, slug))
     .limit(1);
 
   if (!tenant) return null;
+
+  const hasBlocks = !!tenant.config?.has_blocks;
 
   const [draw, results] = await Promise.all([
     db
@@ -57,6 +62,8 @@ export async function getPublicDrawBySlugAndId(
       .select({
         apartmentNumber: apartments.number,
         apartmentId: apartments.id,
+        blockId: apartments.blockId,
+        blockName: blocks.name,
         spotNumber: parkingSpots.number,
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
@@ -65,6 +72,7 @@ export async function getPublicDrawBySlugAndId(
       .from(drawResults)
       .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
       .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
+      .leftJoin(blocks, eq(apartments.blockId, blocks.id))
       .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)))
       .orderBy(asc(apartments.number)),
   ]);
@@ -82,6 +90,7 @@ export async function getPublicDrawBySlugAndId(
 
   return {
     tenantName: tenant.name,
+    hasBlocks,
     drawId: draw.id,
     createdAt:
       draw.createdAt instanceof Date
@@ -91,6 +100,7 @@ export async function getPublicDrawBySlugAndId(
     results: results.map((r) => ({
       apartmentNumber: r.apartmentNumber,
       apartmentId: r.apartmentId,
+      blockName: r.blockName ?? "",
       spotNumber: r.spotNumber,
       spotBasement: r.spotBasement ?? "",
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
