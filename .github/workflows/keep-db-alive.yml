@@ -1,0 +1,20 @@
+name: Keep Supabase DB alive
+
+on:
+  schedule:
+    # Roda a cada 4 dias às 08:00 UTC (05:00 BRT)
+    - cron: "0 8 */4 * *"
+  workflow_dispatch: # permite rodar manualmente
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/health")
+          echo "Status: $response"
+          if [ "$response" != "200" ]; then
+            echo "Health check failed!"
+            exit 1
+          fi
