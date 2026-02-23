@@ -131,25 +131,43 @@ export function ResultadoPageClient({
         </p>
       )}
 
-      <div className="space-y-3">
-        {filteredResults.map((r, i) => (
-          <div
-            key={i}
-            className="rounded-lg border border-[#e2deeb] bg-[#faf9ff] p-5"
-          >
-            <p className="text-lg font-medium text-[#250E62] text-center">
-              Vaga {r.spotNumber}
-              {r.spotBasement ? ` — ${r.spotBasement}` : ""}
-            </p>
-            <p className="text-sm text-[#5b4d7a] text-center mt-1">
-              {r.spotTypeLabel}
-              {r.spotSpecialLabel !== "Normal"
-                ? ` · ${r.spotSpecialLabel}`
-                : ""}
-            </p>
-          </div>
-        ))}
-      </div>
+      {selectedApartment && filteredResults.length > 0 && (
+        <div className="space-y-4">
+          {filteredResults.map((r, i) => (
+            <div
+              key={i}
+              className="rounded-xl border-2 border-[#5936CC] bg-[#f3f0ff] p-6 text-center animate-[fadeIn_0.3s_ease-out]"
+            >
+              <p className="text-sm font-medium text-[#5936CC] uppercase tracking-wide mb-3">
+                Sua vaga sorteada
+              </p>
+              <p className="text-3xl font-bold text-[#250E62] mb-1">
+                Vaga {r.spotNumber}
+              </p>
+              {r.spotBasement && (
+                <p className="text-lg text-[#3F228D] mb-3">
+                  {r.spotBasement}
+                </p>
+              )}
+              <div className="border-t border-[#e2deeb] pt-3 mt-3">
+                <p className="text-base text-[#3F228D]">
+                  Unidade <strong>{r.apartmentNumber}</strong>
+                  {r.blockName ? ` — ${r.blockName}` : ""}
+                  {" → "}
+                  Vaga <strong>{r.spotNumber}</strong>
+                  {r.spotBasement ? ` (${r.spotBasement})` : ""}
+                </p>
+                <p className="text-sm text-[#5b4d7a] mt-1">
+                  {r.spotTypeLabel}
+                  {r.spotSpecialLabel !== "Normal"
+                    ? ` · ${r.spotSpecialLabel}`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
