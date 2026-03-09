@@ -16,3 +16,5 @@
 
 - `docs/artifacts/mapa.md` - análise do sistema legado (Django)
 - `docs/artifacts/database.md` - nota técnica de troca/provedor de banco
+
+-
