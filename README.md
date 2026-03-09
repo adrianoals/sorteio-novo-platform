@@ -1,4 +1,4 @@
-# Sorteio Novo V2
+# Sorteio Novo Platform
 
 Aplicação web para gestão de condomínios e sorteio de vagas de garagem.
 
