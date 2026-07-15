@@ -15,16 +15,15 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "csv-parse": "^6.1.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
-    "next": "16.1.6",
+    "next": "16.2.10",
     "next-auth": "^5.0.0-beta.30",
     "postgres": "^3.4.8",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "swr": "^2.4.0",
-    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -36,9 +35,20 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    },
+    "exceljs": {
+      "uuid": "11.1.1"
+    },
+    "next": {
+      "postcss": "8.5.10"
+    }
   }
 }

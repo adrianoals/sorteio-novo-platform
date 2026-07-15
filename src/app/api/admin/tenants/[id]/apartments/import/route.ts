@@ -31,11 +31,11 @@ function getBlocks(tenantId: string): Promise<BlockInfo[]> {
     .orderBy(blocks.name);
 }
 
-function getRawRows(
+async function getRawRows(
   buffer: Buffer,
   contentType: string,
   filename: string
-): Record<string, string>[] {
+): Promise<Record<string, string>[]> {
   const fn = filename.toLowerCase();
   const isXlsx = fn.endsWith(".xlsx") || fn.endsWith(".xls") || buffer[0] === 0x50;
   if (isXlsx) return parseApartmentXlsxRaw(buffer);
@@ -84,7 +84,7 @@ export async function POST(
   const buffer = Buffer.from(await file.arrayBuffer());
   const contentType = file.type || "";
   const filename = file.name || "";
-  const rawRows = getRawRows(buffer, contentType, filename);
+  const rawRows = await getRawRows(buffer, contentType, filename);
   const rows: ApartmentRow[] = rawRows
     .map((raw) => mapRawRowToApartmentRow(raw, config, blocksList))
     .filter((r) => r.number.trim() !== "");

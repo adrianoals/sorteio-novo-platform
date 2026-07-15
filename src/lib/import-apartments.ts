@@ -1,5 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { getRawKey, isSim } from "./import-sim-nao";
+import { readFirstWorksheetRows } from "./read-xlsx";
 
 export type ApartmentConfig = {
   has_blocks?: boolean;
@@ -222,30 +223,14 @@ export function validateApartmentRow(
 }
 
 /** Retorna linhas brutas da planilha Excel (para uso com mapRawRowToApartmentRow). */
-export function parseApartmentXlsxRaw(buffer: Buffer): Record<string, string>[] {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const XLSX = require("xlsx");
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const first = wb.SheetNames[0];
-  const sheet = wb.Sheets[first];
-  const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
-  return data.map((r) => {
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(r)) {
-      out[k ?? ""] = v != null ? String(v).trim() : "";
-    }
-    return out;
-  });
+export function parseApartmentXlsxRaw(
+  buffer: Buffer
+): Promise<Record<string, string>[]> {
+  return readFirstWorksheetRows(buffer);
 }
 
-export function parseApartmentXlsx(buffer: Buffer): ApartmentRow[] {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const XLSX = require("xlsx");
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const first = wb.SheetNames[0];
-  const sheet = wb.Sheets[first];
-  const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
-
+export async function parseApartmentXlsx(buffer: Buffer): Promise<ApartmentRow[]> {
+  const data = await readFirstWorksheetRows(buffer);
   return data.map((r) => {
     const num = String(r.number ?? r.numero ?? r["Número"] ?? "").trim();
     const block = String(r.block_id ?? r.blockId ?? r.bloco ?? "").trim();

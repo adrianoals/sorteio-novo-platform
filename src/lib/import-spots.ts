@@ -1,5 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { getRawKey, isSim } from "./import-sim-nao";
+import { readFirstWorksheetRows } from "./read-xlsx";
 
 export interface SpotRow {
   number: string;
@@ -182,30 +183,14 @@ export function validateSpotRow(
 }
 
 /** Retorna linhas brutas da planilha Excel (para uso com mapRawRowToSpotRow). */
-export function parseSpotXlsxRaw(buffer: Buffer): Record<string, string>[] {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const XLSX = require("xlsx");
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const first = wb.SheetNames[0];
-  const sheet = wb.Sheets[first];
-  const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
-  return data.map((r) => {
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(r)) {
-      out[k ?? ""] = v != null ? String(v).trim() : "";
-    }
-    return out;
-  });
+export function parseSpotXlsxRaw(
+  buffer: Buffer
+): Promise<Record<string, string>[]> {
+  return readFirstWorksheetRows(buffer);
 }
 
-export function parseSpotXlsx(buffer: Buffer): SpotRow[] {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const XLSX = require("xlsx");
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const first = wb.SheetNames[0];
-  const sheet = wb.Sheets[first];
-  const data = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
-
+export async function parseSpotXlsx(buffer: Buffer): Promise<SpotRow[]> {
+  const data = await readFirstWorksheetRows(buffer);
   return data.map((r) => {
     const rawTipo = String(r.spot_type ?? r.spotType ?? r.tipo ?? "simple");
     const rawEspecial = String(r.special_type ?? r.specialType ?? r.especial ?? "normal");
