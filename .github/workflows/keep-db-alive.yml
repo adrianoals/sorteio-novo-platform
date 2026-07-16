@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping health endpoint
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/health")
+          response=$(curl -s -o /dev/null -w "%{http_code}" "https://sorteio-novo-platform.vercel.app/api/health")
           echo "Status: $response"
           if [ "$response" != "200" ]; then
             echo "Health check failed!"
