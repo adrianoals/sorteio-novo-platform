@@ -3,12 +3,11 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import bcrypt from "bcrypt";
 
-// Carregar .env.local ANTES de qualquer import que use DATABASE_URL (imports estáticos rodam primeiro)
+// Carregar variáveis antes dos imports dinâmicos que inicializam a conexão.
+config({ path: resolve(process.cwd(), ".env") });
 const envLocal = resolve(process.cwd(), ".env.local");
 if (existsSync(envLocal)) {
-  config({ path: envLocal });
-} else {
-  config();
+  config({ path: envLocal, override: true });
 }
 
 async function seed() {
