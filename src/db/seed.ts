@@ -18,8 +18,14 @@ async function seed() {
   const { apartments } = await import("./schema/apartments");
   const { parkingSpots } = await import("./schema/parking_spots");
 
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@sorteionovo.local";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "Configure ADMIN_EMAIL e ADMIN_PASSWORD antes de executar o seed."
+    );
+  }
+
   const passwordHash = await bcrypt.hash(adminPassword, 10);
   await db
     .insert(users)
@@ -28,8 +34,16 @@ async function seed() {
       passwordHash,
       role: "admin",
     })
-    .onConflictDoNothing({ target: [users.email] });
-  console.log(`Admin user: ${adminEmail} (senha: ${adminPassword})`);
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash, role: "admin" },
+    });
+  console.log(`Admin user configured: ${adminEmail}`);
+
+  if (process.env.SEED_DEMO_DATA !== "true") {
+    console.log("Seed completed without demo data.");
+    process.exit(0);
+  }
 
   const { eq } = await import("drizzle-orm");
   const existing = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.slug, "condominio-teste")).limit(1);
@@ -74,7 +88,7 @@ async function seed() {
     ]);
   }
 
-  console.log("Seed completed: admin user, 1 tenant, 3 apartments, 3 parking spots.");
+  console.log("Seed completed with demo tenant, apartments and parking spots.");
   process.exit(0);
 }
 
