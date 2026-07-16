@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { logAudit } from "@/lib/audit";
+import { formatParkingUnitLabel } from "@/lib/parking-units";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -51,6 +52,8 @@ export async function GET(
       spotBasement: parkingSpots.basement,
       spotType: parkingSpots.spotType,
       spotSpecialType: parkingSpots.specialType,
+      allocationType: parkingSpots.allocationType,
+      physicalSpots: parkingSpots.physicalSpots,
     })
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -61,7 +64,10 @@ export async function GET(
     id: draw.id,
     createdAt: draw.createdAt,
     executedByUserId: draw.executedByUserId ?? null,
-    results,
+    results: results.map((result) => ({
+      ...result,
+      spotNumber: formatParkingUnitLabel(result.spotNumber, result.allocationType, result.physicalSpots),
+    })),
   });
 }
 

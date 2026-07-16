@@ -10,6 +10,7 @@ export interface TenantConfig {
   basements?: string[];
   enabled_features?: { pne?: boolean; idoso?: boolean };
   intended_draw_type?: "S1" | "S2" | "S3";
+  parking_allocation_mode?: "individual" | "group" | "mixed";
 }
 
 export interface TenantBranding {

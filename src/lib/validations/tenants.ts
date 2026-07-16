@@ -32,6 +32,7 @@ export const updateTenantSchema = z.object({
         })
         .optional(),
       intended_draw_type: z.enum(["S1", "S2", "S3"]).optional(),
+      parking_allocation_mode: z.enum(["individual", "group", "mixed"]).optional(),
     })
     .passthrough()
     .optional(),

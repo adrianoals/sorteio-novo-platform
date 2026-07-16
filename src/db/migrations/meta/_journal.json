@@ -50,6 +50,13 @@
       "when": 1771022400000,
       "tag": "0006_swift_pool_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784231730701,
+      "tag": "0007_famous_human_fly",
+      "breakpoints": true
     }
   ]
 }

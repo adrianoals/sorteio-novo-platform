@@ -8,6 +8,7 @@ import {
   parkingSpots,
 } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
+import { formatParkingUnitLabel } from "@/lib/parking-units";
 
 export async function GET(
   _req: NextRequest,
@@ -43,6 +44,8 @@ export async function GET(
       spotBasement: parkingSpots.basement,
       spotType: parkingSpots.spotType,
       spotSpecialType: parkingSpots.specialType,
+      allocationType: parkingSpots.allocationType,
+      physicalSpots: parkingSpots.physicalSpots,
     })
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -78,7 +81,7 @@ export async function GET(
     results: results.map((r) => ({
       apartmentNumber: r.apartmentNumber,
       apartmentId: r.apartmentId,
-      spotNumber: r.spotNumber,
+      spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       spotBasement: r.spotBasement ?? "",
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       spotSpecialLabel: SPECIAL_LABELS[r.spotSpecialType ?? "normal"] ?? r.spotSpecialType,

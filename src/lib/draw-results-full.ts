@@ -5,6 +5,7 @@ import {
   parkingSpots,
 } from "@/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
+import { formatParkingUnitLabel } from "./parking-units";
 
 export type FullResultRow = {
   apartmentNumber: string;
@@ -33,6 +34,8 @@ export async function getFullDrawResults(
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
         spotSpecialType: parkingSpots.specialType,
+        allocationType: parkingSpots.allocationType,
+        physicalSpots: parkingSpots.physicalSpots,
       })
       .from(drawResults)
       .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -46,6 +49,8 @@ export async function getFullDrawResults(
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
         spotSpecialType: parkingSpots.specialType,
+        allocationType: parkingSpots.allocationType,
+        physicalSpots: parkingSpots.physicalSpots,
       })
       .from(parkingSpots)
       .innerJoin(apartments, eq(parkingSpots.apartmentId, apartments.id))
@@ -62,7 +67,7 @@ export async function getFullDrawResults(
 
   const fromDraw: FullResultRow[] = fromDrawRows.map((r) => ({
     apartmentNumber: r.apartmentNumber,
-    spotNumber: r.spotNumber,
+    spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
     spotBasement: r.spotBasement,
     spotType: r.spotType,
     spotSpecialType: r.spotSpecialType,
@@ -72,7 +77,7 @@ export async function getFullDrawResults(
     .filter((r) => !drawnApartmentIds.has(r.apartmentId))
     .map((r) => ({
       apartmentNumber: r.apartmentNumber,
-      spotNumber: r.spotNumber,
+      spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       spotBasement: r.spotBasement,
       spotType: r.spotType,
       spotSpecialType: r.spotSpecialType,

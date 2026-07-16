@@ -12,6 +12,7 @@ import {
 import type { TenantConfig } from "@/db/schema/tenants";
 import { and, eq, asc } from "drizzle-orm";
 import ExcelJS from "exceljs";
+import { formatParkingUnitLabel } from "@/lib/parking-units";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -81,6 +82,8 @@ export async function GET(
       spotBasement: parkingSpots.basement,
       spotType: parkingSpots.spotType,
       spotSpecialType: parkingSpots.specialType,
+      allocationType: parkingSpots.allocationType,
+      physicalSpots: parkingSpots.physicalSpots,
     })
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -95,7 +98,7 @@ export async function GET(
   const rows = results.map((r) => {
     const row: Record<string, string> = {
       Apartamento: r.apartmentNumber,
-      Vaga: r.spotNumber,
+      Vaga: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       Tipo: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       Especial: SPECIAL_LABELS[r.spotSpecialType ?? "normal"] ?? r.spotSpecialType,
     };

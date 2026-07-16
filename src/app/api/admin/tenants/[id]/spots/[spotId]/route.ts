@@ -5,6 +5,7 @@ import { apartments, parkingSpots } from "@/db/schema";
 import { updateSpotSchema } from "@/lib/validations/spots";
 import { logAudit } from "@/lib/audit";
 import { and, eq, isNull, ne } from "drizzle-orm";
+import { findPhysicalSpotConflict } from "@/lib/parking-units";
 
 export async function PATCH(
   req: NextRequest,
@@ -73,6 +74,15 @@ export async function PATCH(
       { status: 409 }
     );
   }
+  const allocationType = parsed.data.allocationType ?? existing.allocationType;
+  const physicalSpots = parsed.data.physicalSpots ?? existing.physicalSpots;
+  if (allocationType === "group" && physicalSpots.length === 0) {
+    return NextResponse.json({ error: "Grupos precisam informar as vagas físicas.", field: "physicalSpots" }, { status: 400 });
+  }
+  const units = await db.select({ id: parkingSpots.id, physicalSpots: parkingSpots.physicalSpots })
+    .from(parkingSpots).where(eq(parkingSpots.tenantId, tenantId));
+  const conflict = findPhysicalSpotConflict(physicalSpots, units, spotId);
+  if (conflict) return NextResponse.json({ error: `A vaga física ${conflict} já pertence a outra unidade.`, field: "physicalSpots" }, { status: 409 });
 
   const update: Record<string, unknown> = {};
   if (parsed.data.number !== undefined) update.number = parsed.data.number;
@@ -81,6 +91,8 @@ export async function PATCH(
   if (parsed.data.spotType !== undefined) update.spotType = parsed.data.spotType;
   if (parsed.data.specialType !== undefined) update.specialType = parsed.data.specialType ?? null;
   if (parsed.data.attributes !== undefined) update.attributes = parsed.data.attributes ?? null;
+  if (parsed.data.allocationType !== undefined) update.allocationType = parsed.data.allocationType;
+  if (parsed.data.physicalSpots !== undefined) update.physicalSpots = parsed.data.physicalSpots;
 
   if (parsed.data.apartmentId !== undefined) {
     const newApartmentId = parsed.data.apartmentId ?? null;

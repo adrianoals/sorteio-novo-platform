@@ -14,6 +14,8 @@ type Spot = {
   specialType: string | null;
   blockId: string | null;
   apartmentId: string | null;
+  allocationType: "individual" | "group";
+  physicalSpots: string[];
 };
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
@@ -42,7 +44,7 @@ export function SpotsTab({
 }: {
   tenantId: string;
   hasBlocks: boolean;
-  config?: { has_basement?: boolean; basements?: string[] } | null;
+  config?: { has_basement?: boolean; basements?: string[]; parking_allocation_mode?: "individual" | "group" | "mixed" } | null;
 }) {
   const { data, mutate, isLoading } = useSWR<{
     spots: Spot[];
@@ -62,6 +64,8 @@ export function SpotsTab({
   const [formBlockId, setFormBlockId] = useState("");
   const [formSpotType, setFormSpotType] = useState<"simple" | "double">("simple");
   const [formSpecialType, setFormSpecialType] = useState("normal");
+  const [formAllocationType, setFormAllocationType] = useState<"individual" | "group">(config?.parking_allocation_mode === "group" ? "group" : "individual");
+  const [formPhysicalSpots, setFormPhysicalSpots] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -96,6 +100,8 @@ export function SpotsTab({
     setFormBlockId("");
     setFormSpotType("simple");
     setFormSpecialType("normal");
+    setFormAllocationType(config?.parking_allocation_mode === "group" ? "group" : "individual");
+    setFormPhysicalSpots("");
     setShowForm(true);
     setError(null);
   };
@@ -107,6 +113,8 @@ export function SpotsTab({
     setFormBlockId(s.blockId ?? "");
     setFormSpotType(s.spotType as "simple" | "double");
     setFormSpecialType(s.specialType ?? "normal");
+    setFormAllocationType(s.allocationType ?? "individual");
+    setFormPhysicalSpots((s.physicalSpots ?? []).join(", "));
     setShowForm(true);
     setError(null);
   };
@@ -132,6 +140,8 @@ export function SpotsTab({
         basement: hasBasement ? (formBasement || null) : null,
         spotType: formSpotType,
         specialType: formSpecialType,
+        allocationType: formAllocationType,
+        physicalSpots: formPhysicalSpots.split(/[,;|]/).map((v) => v.trim()).filter(Boolean),
       };
       const res = await fetch(url, {
         method,
@@ -466,6 +476,22 @@ export function SpotsTab({
               className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2"
             />
           </div>
+          {config?.parking_allocation_mode !== "individual" && (
+            <div>
+              <label className="block text-sm font-medium text-[#3F228D] mb-1">Unidade de alocação</label>
+              <select value={formAllocationType} onChange={(e) => setFormAllocationType(e.target.value as "individual" | "group")} className="w-full max-w-xs rounded border border-[#e2deeb] px-3 py-2">
+                {config?.parking_allocation_mode !== "group" && <option value="individual">Vaga individual</option>}
+                <option value="group">Grupo de vagas</option>
+              </select>
+            </div>
+          )}
+          {formAllocationType === "group" && (
+            <div>
+              <label className="block text-sm font-medium text-[#3F228D] mb-1">Vagas físicas do grupo</label>
+              <input type="text" value={formPhysicalSpots} onChange={(e) => setFormPhysicalSpots(e.target.value)} required placeholder="Ex.: 16, 122, 123" className="w-full max-w-md rounded border border-[#e2deeb] px-3 py-2" />
+              <p className="mt-1 text-xs text-[#5b4d7a]">Separe os números por vírgula.</p>
+            </div>
+          )}
           {hasBasement && (
             <div>
               <label className="block text-sm font-medium text-[#3F228D] mb-1">
@@ -630,7 +656,10 @@ export function SpotsTab({
                       className="rounded border-[#e2deeb]"
                     />
                   </td>
-                  <td className="px-4 py-3">{s.number}</td>
+                  <td className="px-4 py-3">
+                    <div>{s.number}</div>
+                    {s.allocationType === "group" && s.physicalSpots?.length > 0 && <div className="text-xs text-[#5b4d7a]">Vagas: ({s.physicalSpots.join(", ")})</div>}
+                  </td>
                   {hasBasement && (
                     <td className="px-4 py-3">{s.basement ?? "—"}</td>
                   )}

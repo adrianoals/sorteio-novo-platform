@@ -14,6 +14,7 @@ type Tenant = {
     basements?: string[];
     enabled_features?: { pne?: boolean; idoso?: boolean };
     intended_draw_type?: "S1" | "S2" | "S3";
+    parking_allocation_mode?: "individual" | "group" | "mixed";
   } | null;
 };
 
@@ -30,6 +31,9 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
   const [idoso, setIdoso] = useState(!!tenant.config?.enabled_features?.idoso);
   const [intendedDrawType, setIntendedDrawType] = useState<string>(
     tenant.config?.intended_draw_type ?? "S1"
+  );
+  const [parkingAllocationMode, setParkingAllocationMode] = useState(
+    tenant.config?.parking_allocation_mode ?? "individual"
   );
   const [status, setStatus] = useState(tenant.status);
   const [name, setName] = useState(tenant.name);
@@ -65,6 +69,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
             basements: basements.filter((s) => s.trim()),
             enabled_features: { pne, idoso },
             intended_draw_type: intendedDrawType as "S1" | "S2" | "S3",
+            parking_allocation_mode: parkingAllocationMode,
           },
         }),
       });
@@ -99,6 +104,7 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
         if (updated.config.intended_draw_type) {
           setIntendedDrawType(updated.config.intended_draw_type);
         }
+        if (updated.config.parking_allocation_mode) setParkingAllocationMode(updated.config.parking_allocation_mode);
       }
       router.refresh();
     } catch {
@@ -142,6 +148,14 @@ export function TenantConfigTab({ tenant }: { tenant: Tenant }) {
       </div>
       <div className="space-y-4 border-t border-[#e2deeb] pt-6">
         <h3 className="font-medium text-[#250E62]">Configuração</h3>
+        <div>
+          <label className="block text-sm font-medium text-[#3F228D] mb-1">Unidades de estacionamento</label>
+          <select value={parkingAllocationMode} onChange={(e) => setParkingAllocationMode(e.target.value as "individual" | "group" | "mixed")} className="rounded border border-[#e2deeb] px-3 py-2">
+            <option value="individual">Somente vagas individuais</option>
+            <option value="group">Somente grupos de vagas</option>
+            <option value="mixed">Vagas individuais e grupos</option>
+          </select>
+        </div>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"

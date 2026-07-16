@@ -104,6 +104,8 @@ export async function POST(
     basement: string | null;
     spotType: "simple" | "double";
     specialType: "normal" | "pne" | "idoso" | "visitor";
+    allocationType: "individual" | "group";
+    physicalSpots: string[];
   }> = [];
 
   const existingRows = await db
@@ -111,6 +113,7 @@ export async function POST(
       number: parkingSpots.number,
       basement: parkingSpots.basement,
       blockId: parkingSpots.blockId,
+      physicalSpots: parkingSpots.physicalSpots,
     })
     .from(parkingSpots)
     .where(eq(parkingSpots.tenantId, tenantId));
@@ -118,6 +121,7 @@ export async function POST(
   const existingKeys = new Set(
     existingRows.map((r) => spotDupKey(r.number, r.basement, r.blockId))
   );
+  const usedPhysicalSpots = new Set(existingRows.flatMap((r) => r.physicalSpots ?? []));
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -146,6 +150,12 @@ export async function POST(
       rejected++;
       continue;
     }
+    const physicalConflict = row.physical_spots.find((spot) => usedPhysicalSpots.has(spot));
+    if (physicalConflict) {
+      errors.push({ row: i + 1, reason: `A vaga física ${physicalConflict} já pertence a outra unidade` });
+      rejected++;
+      continue;
+    }
 
     toInsert.push({
       tenantId,
@@ -154,7 +164,10 @@ export async function POST(
       basement,
       spotType: row.spot_type as "simple" | "double",
       specialType: (row.special_type as "normal" | "pne" | "idoso" | "visitor") || "normal",
+      allocationType: row.allocation_type,
+      physicalSpots: row.physical_spots,
     });
+    row.physical_spots.forEach((spot) => usedPhysicalSpots.add(spot));
     existingKeys.add(key);
   }
 

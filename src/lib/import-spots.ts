@@ -8,18 +8,26 @@ export interface SpotRow {
   basement?: string;
   spot_type: string;
   special_type: string;
+  allocation_type: "individual" | "group";
+  physical_spots: string[];
 }
 
 export type SpotConfig = {
   has_blocks?: boolean;
   has_basement?: boolean;
   basements?: string[];
+  parking_allocation_mode?: "individual" | "group" | "mixed";
 };
 
 export type BlockInfo = { id: string; name: string; code: string | null };
 
 const SPOT_TYPES = new Set(["simple", "double"]);
 const SPECIAL_TYPES = new Set(["normal", "pne", "idoso", "visitor"]);
+const ALLOCATION_TYPES = new Set(["individual", "group"]);
+
+function parsePhysicalSpots(raw: string): string[] {
+  return [...new Set(raw.replace(/[()\[\]]/g, "").split(/[,;|]/).map((v) => v.trim()).filter(Boolean))];
+}
 
 const SPOT_TYPE_PT: Record<string, string> = {
   simples: "simple",
@@ -118,6 +126,13 @@ export function mapRawRowToSpotRow(
     basement: basement ?? (get("localização", "localizacao", "basement", "subsolo") || undefined),
     spot_type,
     special_type,
+    allocation_type: (() => {
+      const rawType = get("tipo de alocação", "tipo de alocacao", "tipo_alocacao", "allocation_type").trim().toLowerCase();
+      if (rawType === "grupo" || rawType === "group") return "group";
+      if (rawType === "individual") return "individual";
+      return config.parking_allocation_mode === "group" ? "group" : "individual";
+    })(),
+    physical_spots: parsePhysicalSpots(get("vagas físicas", "vagas fisicas", "vagas_fisicas", "physical_spots", "composição", "composicao")),
   };
 }
 
@@ -159,6 +174,8 @@ export function parseSpotCsv(buffer: Buffer): SpotRow[] {
       basement: basementRaw.trim() || undefined,
       spot_type: normalizeSpotType(rawTipo),
       special_type: normalizeSpecialType(rawEspecial),
+      allocation_type: String(r.allocation_type ?? r.tipo_alocacao ?? "individual").toLowerCase() === "grupo" ? "group" : "individual",
+      physical_spots: parsePhysicalSpots(r.physical_spots ?? r.vagas_fisicas ?? ""),
     };
   });
 }
@@ -178,6 +195,12 @@ export function validateSpotRow(
   }
   if (!SPECIAL_TYPES.has(row.special_type)) {
     return { ok: false, row: rowIndex, reason: `Especial inválido: ${row.special_type}. Use: Normal, PNE, Idoso ou Visitante` };
+  }
+  if (!ALLOCATION_TYPES.has(row.allocation_type)) {
+    return { ok: false, row: rowIndex, reason: "Tipo de alocação inválido. Use: Individual ou Grupo" };
+  }
+  if (row.allocation_type === "group" && row.physical_spots.length === 0) {
+    return { ok: false, row: rowIndex, reason: "Grupos precisam informar as vagas físicas" };
   }
   return { ok: true };
 }
@@ -203,6 +226,8 @@ export async function parseSpotXlsx(buffer: Buffer): Promise<SpotRow[]> {
       basement: basementRaw || undefined,
       spot_type: normalizeSpotType(rawTipo),
       special_type: normalizeSpecialType(rawEspecial),
+      allocation_type: String(r.allocation_type ?? r.tipo_alocacao ?? "individual").toLowerCase() === "grupo" ? "group" : "individual",
+      physical_spots: parsePhysicalSpots(String(r.physical_spots ?? r.vagas_fisicas ?? "")),
     };
   });
 }

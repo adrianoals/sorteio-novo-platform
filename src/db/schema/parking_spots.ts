@@ -9,6 +9,9 @@ export type SpotType = (typeof spotTypeEnum)[number];
 export const specialTypeEnum = ["normal", "pne", "idoso", "visitor"] as const;
 export type SpecialType = (typeof specialTypeEnum)[number];
 
+export const allocationTypeEnum = ["individual", "group"] as const;
+export type AllocationType = (typeof allocationTypeEnum)[number];
+
 export interface ParkingSpotAttributes {
   [key: string]: unknown;
 }
@@ -27,6 +30,8 @@ export const parkingSpots = pgTable(
     basement: varchar("basement", { length: 50 }),
     spotType: varchar("spot_type", { length: 20 }).notNull().default("simple"),
     specialType: varchar("special_type", { length: 20 }).default("normal"),
+    allocationType: varchar("allocation_type", { length: 20 }).notNull().default("individual"),
+    physicalSpots: jsonb("physical_spots").$type<string[]>().notNull().default([]),
     attributes: jsonb("attributes").$type<ParkingSpotAttributes>(),
   },
   (t) => [unique("parking_spots_id_tenant_unique").on(t.id, t.tenantId)]

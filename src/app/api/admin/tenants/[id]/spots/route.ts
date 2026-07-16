@@ -5,6 +5,7 @@ import { tenants, parkingSpots } from "@/db/schema";
 import { createSpotSchema } from "@/lib/validations/spots";
 import { logAudit } from "@/lib/audit";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { findPhysicalSpotConflict } from "@/lib/parking-units";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -66,7 +67,7 @@ export async function POST(
     );
   }
 
-  const { number, blockId, basement, spotType, specialType, attributes } = parsed.data;
+  const { number, blockId, basement, spotType, specialType, attributes, allocationType, physicalSpots } = parsed.data;
   const baseConditions = [
     eq(parkingSpots.tenantId, tenantId),
     eq(parkingSpots.number, number),
@@ -89,6 +90,11 @@ export async function POST(
     );
   }
 
+  const units = await db.select({ id: parkingSpots.id, physicalSpots: parkingSpots.physicalSpots })
+    .from(parkingSpots).where(eq(parkingSpots.tenantId, tenantId));
+  const conflict = findPhysicalSpotConflict(physicalSpots, units);
+  if (conflict) return NextResponse.json({ error: `A vaga física ${conflict} já pertence a outra unidade.`, field: "physicalSpots" }, { status: 409 });
+
   const [created] = await db
     .insert(parkingSpots)
     .values({
@@ -99,6 +105,8 @@ export async function POST(
       spotType,
       specialType: specialType ?? "normal",
       attributes: attributes ?? null,
+      allocationType,
+      physicalSpots,
     })
     .returning();
 

@@ -1,0 +1,2 @@
+ALTER TABLE "parking_spots" ADD COLUMN "allocation_type" varchar(20) DEFAULT 'individual' NOT NULL;--> statement-breakpoint
+ALTER TABLE "parking_spots" ADD COLUMN "physical_spots" jsonb DEFAULT '[]'::jsonb NOT NULL;

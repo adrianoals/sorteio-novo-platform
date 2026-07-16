@@ -8,6 +8,7 @@ import {
   blocks,
 } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
+import { formatParkingUnitLabel } from "./parking-units";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -68,6 +69,8 @@ export async function getPublicDrawBySlugAndId(
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
         spotSpecialType: parkingSpots.specialType,
+        allocationType: parkingSpots.allocationType,
+        physicalSpots: parkingSpots.physicalSpots,
       })
       .from(drawResults)
       .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -101,7 +104,7 @@ export async function getPublicDrawBySlugAndId(
       apartmentNumber: r.apartmentNumber,
       apartmentId: r.apartmentId,
       blockName: r.blockName ?? "",
-      spotNumber: r.spotNumber,
+      spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       spotBasement: r.spotBasement ?? "",
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       spotSpecialLabel:
