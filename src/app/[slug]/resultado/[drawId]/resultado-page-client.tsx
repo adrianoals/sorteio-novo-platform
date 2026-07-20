@@ -8,6 +8,10 @@ type ResultRow = {
   apartmentId: string;
   blockName: string;
   spotNumber: string;
+  spotUnitNumber: string;
+  spotAllocationType: string;
+  spotPhysicalSpots: string[];
+  spotLocationGroups: { location: string; spots: string[] }[];
   spotBasement: string;
   spotTypeLabel: string;
   spotSpecialLabel: string;
@@ -145,28 +149,33 @@ export function ResultadoPageClient({
                 Sua vaga sorteada
               </p>
               <p className="text-3xl font-bold text-[#250E62] mb-1">
-                Vaga {r.spotNumber}
+                {r.spotAllocationType === "group"
+                  ? r.spotUnitNumber
+                  : `Vaga ${r.spotUnitNumber}`}
               </p>
-              {r.spotBasement && (
-                <p className="text-lg text-[#3F228D] mb-3">
-                  {r.spotBasement}
-                </p>
+              {r.spotAllocationType === "group" &&
+                r.spotLocationGroups.length <= 1 && (
+                  <p className="text-xl font-semibold text-[#3F228D] mt-2">
+                    Vagas: ({r.spotPhysicalSpots.join(", ")})
+                  </p>
+                )}
+              {r.spotLocationGroups.length > 1 ? (
+                <div className="mt-5 space-y-2 text-lg text-[#3F228D]">
+                  {r.spotLocationGroups.map((group) => (
+                    <p key={group.location}>
+                      <strong>{group.location}:</strong>{" "}
+                      {group.spots.length === 1 ? "vaga" : "vagas"}{" "}
+                      {group.spots.join(" e ")}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                r.spotBasement && (
+                  <p className="text-lg text-[#3F228D] mt-3">
+                    {r.spotBasement}
+                  </p>
+                )
               )}
-              <div className="border-t border-[#e2deeb] pt-3 mt-3">
-                <p className="text-base text-[#3F228D]">
-                  Unidade <strong>{r.apartmentNumber}</strong>
-                  {r.blockName ? ` — ${r.blockName}` : ""}
-                  {" → "}
-                  Vaga <strong>{r.spotNumber}</strong>
-                  {r.spotBasement ? ` (${r.spotBasement})` : ""}
-                </p>
-                <p className="text-sm text-[#5b4d7a] mt-1">
-                  {r.spotTypeLabel}
-                  {r.spotSpecialLabel !== "Normal"
-                    ? ` · ${r.spotSpecialLabel}`
-                    : ""}
-                </p>
-              </div>
             </div>
           ))}
         </div>

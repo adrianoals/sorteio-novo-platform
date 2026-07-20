@@ -8,7 +8,11 @@ import {
   blocks,
 } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
-import { formatParkingUnitLabel } from "./parking-units";
+import {
+  formatParkingUnitLabel,
+  getPhysicalSpotLocationGroups,
+  type PhysicalSpotLocationGroup,
+} from "./parking-units";
 import { compareDrawResults } from "./draw-result-order";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
@@ -33,6 +37,10 @@ export type PublicDrawResult = {
     apartmentId: string;
     blockName: string;
     spotNumber: string;
+    spotUnitNumber: string;
+    spotAllocationType: string;
+    spotPhysicalSpots: string[];
+    spotLocationGroups: PhysicalSpotLocationGroup[];
     spotBasement: string;
     spotTypeLabel: string;
     spotSpecialLabel: string;
@@ -72,6 +80,7 @@ export async function getPublicDrawBySlugAndId(
         spotSpecialType: parkingSpots.specialType,
         allocationType: parkingSpots.allocationType,
         physicalSpots: parkingSpots.physicalSpots,
+        spotAttributes: parkingSpots.attributes,
       })
       .from(drawResults)
       .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
@@ -106,6 +115,13 @@ export async function getPublicDrawBySlugAndId(
       apartmentId: r.apartmentId,
       blockName: r.blockName ?? "",
       spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
+      spotUnitNumber: r.spotNumber,
+      spotAllocationType: r.allocationType,
+      spotPhysicalSpots: r.physicalSpots,
+      spotLocationGroups: getPhysicalSpotLocationGroups(
+        r.physicalSpots,
+        r.spotAttributes
+      ),
       spotBasement: r.spotBasement ?? "",
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       spotSpecialLabel:

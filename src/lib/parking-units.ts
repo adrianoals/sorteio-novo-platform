@@ -15,3 +15,29 @@ export function findPhysicalSpotConflict(
   const used = new Set(existing.filter((item) => item.id !== ignoredId).flatMap((item) => item.physicalSpots ?? []));
   return requested.find((spot) => used.has(spot)) ?? null;
 }
+
+export type PhysicalSpotLocationGroup = {
+  location: string;
+  spots: string[];
+};
+
+export function getPhysicalSpotLocationGroups(
+  physicalSpots: string[] | null | undefined,
+  attributes: unknown
+): PhysicalSpotLocationGroup[] {
+  if (!physicalSpots?.length || !attributes || typeof attributes !== "object") {
+    return [];
+  }
+  const locations = (attributes as { physicalSpotLocations?: unknown })
+    .physicalSpotLocations;
+  if (!locations || typeof locations !== "object") return [];
+
+  const groups = new Map<string, string[]>();
+  for (const spot of physicalSpots) {
+    const location = (locations as Record<string, unknown>)[spot];
+    if (typeof location !== "string" || !location.trim()) continue;
+    const normalized = location.trim();
+    groups.set(normalized, [...(groups.get(normalized) ?? []), spot]);
+  }
+  return [...groups].map(([location, spots]) => ({ location, spots }));
+}
