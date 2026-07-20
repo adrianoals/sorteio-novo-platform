@@ -6,6 +6,7 @@ export interface DrawApartment {
   rights: ApartmentRightsList;
   allowedSubsolos: string[] | null;
   allowedBlocks: string[] | null;
+  specialEligibility: string[];
 }
 
 export interface DrawSpot {
@@ -14,6 +15,7 @@ export interface DrawSpot {
   basement: string | null;
   blockId: string | null;
   apartmentId: string | null;
+  specialType: string | null;
 }
 
 export interface DrawAssignment {
@@ -24,9 +26,18 @@ export interface DrawAssignment {
 function spotEligibleForApartment(
   spot: DrawSpot,
   slotType: DrawSlotType,
-  apartment: Pick<DrawApartment, "allowedSubsolos" | "allowedBlocks">
+  apartment: Pick<
+    DrawApartment,
+    "allowedSubsolos" | "allowedBlocks" | "specialEligibility"
+  >
 ): boolean {
   if (spot.spotType !== slotType) return false;
+  const spotSpecialType = spot.specialType ?? "normal";
+  if (apartment.specialEligibility.length > 0) {
+    if (!apartment.specialEligibility.includes(spotSpecialType)) return false;
+  } else if (spotSpecialType !== "normal") {
+    return false;
+  }
   if (
     apartment.allowedSubsolos?.length &&
     !apartment.allowedSubsolos.includes(spot.basement ?? "")

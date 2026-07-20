@@ -38,6 +38,7 @@ export async function runDrawS1(
       rights: apartments.rights,
       allowedSubsolos: apartments.allowedSubsolos,
       allowedBlocks: apartments.allowedBlocks,
+      attributes: apartments.attributes,
     })
     .from(apartments)
     .where(eq(apartments.tenantId, tenantId));
@@ -49,6 +50,7 @@ export async function runDrawS1(
       basement: parkingSpots.basement,
       blockId: parkingSpots.blockId,
       apartmentId: parkingSpots.apartmentId,
+      specialType: parkingSpots.specialType,
     })
     .from(parkingSpots)
     .where(eq(parkingSpots.tenantId, tenantId));
@@ -60,6 +62,14 @@ export async function runDrawS1(
       rights: (apartment.rights ?? []) as ApartmentRightsList,
       allowedSubsolos: apartment.allowedSubsolos ?? null,
       allowedBlocks: apartment.allowedBlocks ?? null,
+      specialEligibility: Array.isArray(
+        (apartment.attributes as { specialEligibility?: unknown } | null)
+          ?.specialEligibility
+      )
+        ? (
+            apartment.attributes as { specialEligibility: string[] }
+          ).specialEligibility
+        : [],
     })),
     allSpots,
     seed

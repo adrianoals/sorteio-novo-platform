@@ -14,6 +14,7 @@ const apartment = (
   rights: ["simple"],
   allowedSubsolos: null,
   allowedBlocks: null,
+  specialEligibility: [],
   ...overrides,
 });
 
@@ -23,6 +24,7 @@ const spot = (id: string, overrides: Partial<DrawSpot> = {}): DrawSpot => ({
   basement: null,
   blockId: null,
   apartmentId: null,
+  specialType: "normal",
   ...overrides,
 });
 
@@ -95,6 +97,29 @@ test("não atribui vagas quando nenhuma é elegível", () => {
     [apartment("a1", { rights: ["double"] })],
     [spot("simples")],
     "sem-match"
+  );
+
+  assert.deepEqual(results, []);
+});
+
+test("apartamento PNE recebe somente vaga PNE", () => {
+  const results = calculateDrawAssignments(
+    [apartment("apt-pne", { specialEligibility: ["pne"] })],
+    [
+      spot("normal"),
+      spot("pne", { specialType: "pne" }),
+    ],
+    "pne"
+  );
+
+  assert.deepEqual(results, [{ apartmentId: "apt-pne", spotId: "pne" }]);
+});
+
+test("apartamento comum não recebe vaga PNE", () => {
+  const results = calculateDrawAssignments(
+    [apartment("apt-comum")],
+    [spot("pne", { specialType: "pne" })],
+    "normal"
   );
 
   assert.deepEqual(results, []);
