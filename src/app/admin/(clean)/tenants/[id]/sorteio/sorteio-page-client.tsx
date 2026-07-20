@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
@@ -44,6 +44,9 @@ export function SorteioPageClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draw, setDraw] = useState<DrawResult | null>(null);
+  const [revealedCount, setRevealedCount] = useState(0);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const resultsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -58,36 +61,58 @@ export function SorteioPageClient({
     if (!draw || draw.results.length === 0) return [];
     return [...draw.results].sort(compareDrawResults);
   }, [draw]);
+  const visibleResults = resultsByApartment.slice(0, revealedCount);
 
-  /** Tempo mínimo (ms) que a animação "Sorteando..." fica visível para todos os condomínios. */
-  const SORTEANDO_MIN_DURATION_MS = 5000;
+  /** Ritmo da revelação progressiva. 172 linhas levam aproximadamente 13 segundos. */
+  const RESULT_REVEAL_INTERVAL_MS = 75;
+  const animationActive = loading || isRevealing;
+
+  useEffect(() => {
+    if (!draw || !isRevealing) return;
+    if (revealedCount >= resultsByApartment.length) return;
+    const timer = window.setTimeout(() => {
+      const nextCount = revealedCount + 1;
+      setRevealedCount(nextCount);
+      if (nextCount >= resultsByApartment.length) setIsRevealing(false);
+    }, RESULT_REVEAL_INTERVAL_MS);
+    return () => window.clearTimeout(timer);
+  }, [draw, isRevealing, revealedCount, resultsByApartment.length]);
+
+  useEffect(() => {
+    if (revealedCount > 0) {
+      resultsContainerRef.current?.scrollTo({
+        top: resultsContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [revealedCount]);
+
+  function beginReveal(nextDraw: DrawResult) {
+    setDraw(nextDraw);
+    setRevealedCount(0);
+    setIsRevealing(true);
+    setLoading(false);
+  }
 
   async function handleSortear() {
     setError(null);
     setLoading(true);
-    const startedAt = Date.now();
     try {
       const res = await fetch(`/api/admin/tenants/${tenantId}/draws/run`, {
         method: "POST",
       });
       const data = await res.json().catch(() => ({}));
-      const elapsed = Date.now() - startedAt;
-      const waitMs = Math.max(0, SORTEANDO_MIN_DURATION_MS - elapsed);
-      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       if (!res.ok) {
         setError(data.error ?? "Erro ao executar sorteio.");
         setLoading(false);
         return;
       }
-      setDraw({
+      beginReveal({
         drawId: data.drawId,
         createdAt: data.createdAt,
         results: data.results ?? [],
       });
     } catch {
-      const elapsed = Date.now() - startedAt;
-      const waitMs = Math.max(0, SORTEANDO_MIN_DURATION_MS - elapsed);
-      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       setError("Erro de conexão.");
     }
     setLoading(false);
@@ -151,22 +176,27 @@ export function SorteioPageClient({
         </div>
       )}
 
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-16 min-h-[50vh]">
-          <Image
-            src="/gifsorteio/sorteio-gif.gif"
-            alt="Sorteando..."
-            width={640}
-            height={384}
-            unoptimized
-            className="mb-6 w-[min(640px,90vw)] h-auto object-contain"
-          />
-          <p className="text-[#5b4d7a] text-3xl font-medium">Sorteando...</p>
-        </div>
-      )}
-
-      {draw && !loading && (
+      {(draw || loading) && (
         <div className="space-y-8 resultado-sorteio-print">
+          {animationActive && (
+            <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
+              <div className="flex flex-col items-center rounded-3xl bg-white/80 px-8 py-5 shadow-2xl backdrop-blur-[2px]">
+              <Image
+                src="/gifsorteio/sorteio-gif.gif"
+                alt="Sorteando..."
+                width={440}
+                height={264}
+                unoptimized
+                className="w-[min(440px,78vw)] h-auto object-contain"
+              />
+              <p className="text-[#5b4d7a] text-xl font-medium">
+                {draw
+                  ? `Sorteando... ${revealedCount} de ${resultsByApartment.length}`
+                  : "Preparando o sorteio..."}
+              </p>
+              </div>
+            </div>
+          )}
           <div className="text-center">
             <div className="flex items-center justify-center gap-4 mb-2">
               <Image
@@ -186,7 +216,14 @@ export function SorteioPageClient({
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
+          <div
+            ref={resultsContainerRef}
+            className={
+              animationActive
+                ? "max-h-[68vh] overflow-auto border border-[#e2deeb] rounded-lg opacity-70"
+                : "overflow-x-auto"
+            }
+          >
             <table className="w-full text-left text-sm">
               <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
                 <tr>
@@ -205,10 +242,10 @@ export function SorteioPageClient({
                 </tr>
               </thead>
               <tbody>
-                {resultsByApartment.map((r, i) => (
+                {visibleResults.map((r, i) => (
                   <tr
                     key={i}
-                    className="border-b border-[#e2deeb] hover:bg-[#faf9ff]"
+                    className="border-b border-[#e2deeb] hover:bg-[#faf9ff] animate-[fadeIn_0.35s_ease-out]"
                   >
                     <td className="px-4 py-3">{r.blockName ?? "—"}</td>
                     <td className="px-4 py-3">{r.apartmentNumber}</td>
@@ -227,6 +264,7 @@ export function SorteioPageClient({
             </table>
           </div>
 
+          {draw && !animationActive && (
           <div className="flex flex-col items-center justify-center text-center space-y-6">
             <p className="text-[#5b4d7a]">
               Sorteio finalizado em {createdAtFormatted}.
@@ -258,15 +296,16 @@ export function SorteioPageClient({
               </div>
             )}
           </div>
+          )}
 
-          <p className="text-center pt-4 no-print">
+          {draw && !animationActive && <p className="text-center pt-4 no-print">
             <Link
               href={`/admin/tenants/${tenantId}`}
               className="text-sm text-[#5936CC] hover:text-[#250E62]"
             >
               ← Voltar ao condomínio
             </Link>
-          </p>
+          </p>}
         </div>
       )}
     </div>
