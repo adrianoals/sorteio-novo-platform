@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
 import { formatParkingUnitLabel } from "./parking-units";
+import { compareDrawResults } from "./draw-result-order";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -109,6 +110,6 @@ export async function getPublicDrawBySlugAndId(
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       spotSpecialLabel:
         SPECIAL_LABELS[r.spotSpecialType ?? "normal"] ?? r.spotSpecialType ?? "",
-    })),
+    })).sort(compareDrawResults),
   };
 }

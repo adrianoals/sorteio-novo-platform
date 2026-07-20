@@ -10,9 +10,10 @@ import {
   blocks,
 } from "@/db/schema";
 import type { TenantConfig } from "@/db/schema/tenants";
-import { and, eq, asc } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import ExcelJS from "exceljs";
 import { formatParkingUnitLabel } from "@/lib/parking-units";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -25,13 +26,13 @@ const SPECIAL_LABELS: Record<string, string> = {
   visitor: "Visitante",
 };
 
-/** Ordem padrão: Apartamento, [Bloco], Vaga, [Localização], Tipo, Especial */
+/** Ordem padrão: [Bloco], Apartamento, Vaga, [Localização], Tipo, Especial */
 function buildColumnKeys(config: TenantConfig | null | undefined) {
   const hasBlocks = !!config?.has_blocks;
   const hasBasement = !!config?.has_basement;
   const keys: Array<"Apartamento" | "Bloco" | "Vaga" | "Localização" | "Tipo" | "Especial"> = [
-    "Apartamento",
     ...(hasBlocks ? (["Bloco"] as const) : []),
+    "Apartamento",
     "Vaga",
     ...(hasBasement ? (["Localização"] as const) : []),
     "Tipo",
@@ -89,13 +90,12 @@ export async function GET(
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
     .leftJoin(blocks, eq(apartments.blockId, blocks.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)))
-    .orderBy(asc(apartments.number));
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
 
   const hasBlocks = !!config?.has_blocks;
   const hasBasement = !!config?.has_basement;
 
-  const rows = results.map((r) => {
+  const rows = results.sort(compareDrawResults).map((r) => {
     const row: Record<string, string> = {
       Apartamento: r.apartmentNumber,
       Vaga: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),

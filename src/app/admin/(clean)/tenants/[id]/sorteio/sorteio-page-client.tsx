@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 type ResultRow = {
   apartmentNumber: string;
+  blockName: string | null;
   spotNumber: string;
   spotBasement: string | null;
   spotType: string;
@@ -54,9 +56,7 @@ export function SorteioPageClient({
 
   const resultsByApartment = useMemo(() => {
     if (!draw || draw.results.length === 0) return [];
-    return [...draw.results].sort((a, b) =>
-      String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
-    );
+    return [...draw.results].sort(compareDrawResults);
   }, [draw]);
 
   /** Tempo mínimo (ms) que a animação "Sorteando..." fica visível para todos os condomínios. */
@@ -190,6 +190,7 @@ export function SorteioPageClient({
             <table className="w-full text-left text-sm">
               <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
                 <tr>
+                  <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>
                   <th className="px-4 py-3 font-medium text-[#3F228D]">
                     Apartamento
                   </th>
@@ -209,6 +210,7 @@ export function SorteioPageClient({
                     key={i}
                     className="border-b border-[#e2deeb] hover:bg-[#faf9ff]"
                   >
+                    <td className="px-4 py-3">{r.blockName ?? "—"}</td>
                     <td className="px-4 py-3">{r.apartmentNumber}</td>
                     <td className="px-4 py-3">{r.spotNumber}</td>
                     <td className="px-4 py-3">{r.spotBasement ?? "—"}</td>

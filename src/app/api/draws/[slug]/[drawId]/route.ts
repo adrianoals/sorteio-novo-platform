@@ -6,9 +6,11 @@ import {
   drawResults,
   apartments,
   parkingSpots,
+  blocks,
 } from "@/db/schema";
-import { and, eq, asc } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { formatParkingUnitLabel } from "@/lib/parking-units";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 export async function GET(
   _req: NextRequest,
@@ -40,6 +42,7 @@ export async function GET(
     .select({
       apartmentNumber: apartments.number,
       apartmentId: apartments.id,
+      blockName: blocks.name,
       spotNumber: parkingSpots.number,
       spotBasement: parkingSpots.basement,
       spotType: parkingSpots.spotType,
@@ -49,9 +52,9 @@ export async function GET(
     })
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
+    .leftJoin(blocks, eq(apartments.blockId, blocks.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
-    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)))
-    .orderBy(asc(apartments.number));
+    .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenant.id)));
 
   const SPOT_TYPE_LABELS: Record<string, string> = {
     simple: "Simples",
@@ -81,10 +84,11 @@ export async function GET(
     results: results.map((r) => ({
       apartmentNumber: r.apartmentNumber,
       apartmentId: r.apartmentId,
+      blockName: r.blockName ?? "",
       spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       spotBasement: r.spotBasement ?? "",
       spotTypeLabel: SPOT_TYPE_LABELS[r.spotType] ?? r.spotType,
       spotSpecialLabel: SPECIAL_LABELS[r.spotSpecialType ?? "normal"] ?? r.spotSpecialType,
-    })),
+    })).sort(compareDrawResults),
   });
 }

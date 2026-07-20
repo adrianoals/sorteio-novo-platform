@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 type ResultRow = {
   apartmentNumber: string;
+  blockName: string | null;
   spotNumber: string;
   spotBasement: string | null;
   spotType: string;
@@ -47,9 +49,7 @@ export function ViewDrawPageClient({
 
   const resultsByApartment = useMemo(
     () =>
-      [...results].sort((a, b) =>
-        String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
-      ),
+      [...results].sort(compareDrawResults),
     [results]
   );
 
@@ -100,6 +100,7 @@ export function ViewDrawPageClient({
         <table className="w-full text-left text-sm">
           <thead className="bg-[#faf9ff] border-b border-[#e2deeb]">
             <tr>
+              <th className="px-4 py-3 font-medium text-[#3F228D]">Bloco</th>
               <th className="px-4 py-3 font-medium text-[#3F228D]">
                 Apartamento
               </th>
@@ -119,6 +120,7 @@ export function ViewDrawPageClient({
                 key={i}
                 className="border-b border-[#e2deeb] hover:bg-[#faf9ff]"
               >
+                <td className="px-4 py-3">{r.blockName ?? "—"}</td>
                 <td className="px-4 py-3">{r.apartmentNumber}</td>
                 <td className="px-4 py-3">{r.spotNumber}</td>
                 <td className="px-4 py-3">{r.spotBasement ?? "—"}</td>

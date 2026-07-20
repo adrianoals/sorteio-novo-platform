@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 type ResultRow = {
   apartmentNumber: string;
@@ -28,9 +29,7 @@ export function ResultadoPageClient({
 
   const resultsByApartment = useMemo(
     () =>
-      [...results].sort((a, b) =>
-        String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", { numeric: true })
-      ),
+      [...results].sort(compareDrawResults),
     [results]
   );
 
@@ -51,8 +50,12 @@ export function ResultadoPageClient({
 
   const filteredResults = useMemo(() => {
     if (!selectedApartment) return [];
-    return resultsByApartment.filter((r) => r.apartmentNumber === selectedApartment);
-  }, [resultsByApartment, selectedApartment]);
+    return resultsByApartment.filter(
+      (r) =>
+        r.apartmentNumber === selectedApartment &&
+        (!selectedBlock || r.blockName === selectedBlock)
+    );
+  }, [resultsByApartment, selectedApartment, selectedBlock]);
 
   const handleBlockChange = (block: string) => {
     setSelectedBlock(block);

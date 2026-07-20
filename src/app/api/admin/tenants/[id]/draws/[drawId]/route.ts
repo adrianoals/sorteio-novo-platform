@@ -7,10 +7,12 @@ import {
   drawResults,
   apartments,
   parkingSpots,
+  blocks,
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { logAudit } from "@/lib/audit";
 import { formatParkingUnitLabel } from "@/lib/parking-units";
+import { compareDrawResults } from "@/lib/draw-result-order";
 
 async function ensureTenant(tenantId: string) {
   const [t] = await db
@@ -48,6 +50,7 @@ export async function GET(
   const results = await db
     .select({
       apartmentNumber: apartments.number,
+      blockName: blocks.name,
       spotNumber: parkingSpots.number,
       spotBasement: parkingSpots.basement,
       spotType: parkingSpots.spotType,
@@ -57,6 +60,7 @@ export async function GET(
     })
     .from(drawResults)
     .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
+    .leftJoin(blocks, eq(apartments.blockId, blocks.id))
     .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
     .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId)));
 
@@ -67,7 +71,7 @@ export async function GET(
     results: results.map((result) => ({
       ...result,
       spotNumber: formatParkingUnitLabel(result.spotNumber, result.allocationType, result.physicalSpots),
-    })),
+    })).sort(compareDrawResults),
   });
 }
 

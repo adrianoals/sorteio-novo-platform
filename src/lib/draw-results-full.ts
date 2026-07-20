@@ -3,12 +3,15 @@ import {
   drawResults,
   apartments,
   parkingSpots,
+  blocks,
 } from "@/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { formatParkingUnitLabel } from "./parking-units";
+import { compareDrawResults } from "./draw-result-order";
 
 export type FullResultRow = {
   apartmentNumber: string;
+  blockName: string | null;
   spotNumber: string;
   spotBasement: string | null;
   spotType: string;
@@ -30,6 +33,7 @@ export async function getFullDrawResults(
       .select({
         apartmentId: apartments.id,
         apartmentNumber: apartments.number,
+        blockName: blocks.name,
         spotNumber: parkingSpots.number,
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
@@ -40,11 +44,13 @@ export async function getFullDrawResults(
       .from(drawResults)
       .innerJoin(apartments, eq(drawResults.apartmentId, apartments.id))
       .innerJoin(parkingSpots, eq(drawResults.spotId, parkingSpots.id))
+      .leftJoin(blocks, eq(apartments.blockId, blocks.id))
       .where(and(eq(drawResults.drawId, drawId), eq(drawResults.tenantId, tenantId))),
     db
       .select({
         apartmentId: apartments.id,
         apartmentNumber: apartments.number,
+        blockName: blocks.name,
         spotNumber: parkingSpots.number,
         spotBasement: parkingSpots.basement,
         spotType: parkingSpots.spotType,
@@ -54,6 +60,7 @@ export async function getFullDrawResults(
       })
       .from(parkingSpots)
       .innerJoin(apartments, eq(parkingSpots.apartmentId, apartments.id))
+      .leftJoin(blocks, eq(apartments.blockId, blocks.id))
       .where(
         and(
           eq(parkingSpots.tenantId, tenantId),
@@ -67,6 +74,7 @@ export async function getFullDrawResults(
 
   const fromDraw: FullResultRow[] = fromDrawRows.map((r) => ({
     apartmentNumber: r.apartmentNumber,
+    blockName: r.blockName,
     spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
     spotBasement: r.spotBasement,
     spotType: r.spotType,
@@ -77,6 +85,7 @@ export async function getFullDrawResults(
     .filter((r) => !drawnApartmentIds.has(r.apartmentId))
     .map((r) => ({
       apartmentNumber: r.apartmentNumber,
+      blockName: r.blockName,
       spotNumber: formatParkingUnitLabel(r.spotNumber, r.allocationType, r.physicalSpots),
       spotBasement: r.spotBasement,
       spotType: r.spotType,
@@ -84,10 +93,6 @@ export async function getFullDrawResults(
     }));
 
   const combined: FullResultRow[] = [...fromDraw, ...preAssignedOnly];
-  combined.sort((a, b) =>
-    String(a.apartmentNumber).localeCompare(String(b.apartmentNumber), "pt-BR", {
-      numeric: true,
-    })
-  );
+  combined.sort(compareDrawResults);
   return combined;
 }
