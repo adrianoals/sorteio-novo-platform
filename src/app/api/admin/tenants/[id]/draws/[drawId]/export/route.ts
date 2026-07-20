@@ -14,6 +14,7 @@ import { and, eq } from "drizzle-orm";
 import ExcelJS from "exceljs";
 import { formatParkingUnitLabel } from "@/lib/parking-units";
 import { compareDrawResults } from "@/lib/draw-result-order";
+import { formatDrawDate, formatDrawDateForFilename } from "@/lib/draw-date";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -111,14 +112,7 @@ export async function GET(
   workbook.creator = "Sorteio Novo";
   const sheet = workbook.addWorksheet("Resultado", { views: [{ state: "frozen", ySplit: 6 }] });
 
-  const createdAt = new Date(draw.createdAt);
-  const dateFormatted = createdAt.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const dateFormatted = formatDrawDate(draw.createdAt);
 
   sheet.getCell("A1").value = "Sorteio Novo";
   sheet.getCell("A1").font = { bold: true, size: 12 };
@@ -173,7 +167,7 @@ export async function GET(
   sheet.columns = columnKeys.map(() => ({ width: 18 }));
 
   const buf = await workbook.xlsx.writeBuffer();
-  const dateStr = createdAt.toISOString().slice(0, 10);
+  const dateStr = formatDrawDateForFilename(draw.createdAt);
   const safeName = tenant.name.replace(/[^a-zA-Z0-9\s-_]/g, "").replace(/\s+/g, "_").slice(0, 40);
   const filename = `sorteio_${safeName}_${dateStr}.xlsx`;
 

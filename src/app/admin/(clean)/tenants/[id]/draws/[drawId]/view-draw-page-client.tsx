@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { compareDrawResults } from "@/lib/draw-result-order";
+import { formatDrawDate } from "@/lib/draw-date";
 
 type ResultRow = {
   apartmentNumber: string;
@@ -55,14 +56,7 @@ export function ViewDrawPageClient({
 
   const createdAtFormatted = (() => {
     try {
-      return new Date(createdAt).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
+      return formatDrawDate(createdAt);
     } catch {
       return createdAt;
     }

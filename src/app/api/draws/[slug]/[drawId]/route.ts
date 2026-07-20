@@ -11,6 +11,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { formatParkingUnitLabel } from "@/lib/parking-units";
 import { compareDrawResults } from "@/lib/draw-result-order";
+import { formatDrawDate } from "@/lib/draw-date";
 
 export async function GET(
   _req: NextRequest,
@@ -67,14 +68,7 @@ export async function GET(
     visitor: "Visitante",
   };
 
-  const createdAt = new Date(draw.createdAt);
-  const formattedDate = createdAt.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = formatDrawDate(draw.createdAt);
 
   return NextResponse.json({
     tenantName: tenant.name,

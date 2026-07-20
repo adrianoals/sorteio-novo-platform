@@ -14,6 +14,7 @@ import {
   type PhysicalSpotLocationGroup,
 } from "./parking-units";
 import { compareDrawResults } from "./draw-result-order";
+import { formatDrawDate } from "./draw-date";
 
 const SPOT_TYPE_LABELS: Record<string, string> = {
   simple: "Simples",
@@ -92,14 +93,7 @@ export async function getPublicDrawBySlugAndId(
 
   if (!draw) return null;
 
-  const createdAt = new Date(draw.createdAt);
-  const formattedDate = createdAt.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = formatDrawDate(draw.createdAt);
 
   return {
     tenantName: tenant.name,

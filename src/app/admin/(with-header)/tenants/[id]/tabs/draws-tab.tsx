@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/swr";
+import { formatDrawDate } from "@/lib/draw-date";
 
 type DrawItem = {
   id: string;
@@ -47,13 +48,7 @@ export function DrawsTab({ tenantId }: { tenantId: string }) {
 
   const formatDate = (createdAt: string) => {
     try {
-      return new Date(createdAt).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      return formatDrawDate(createdAt);
     } catch {
       return createdAt;
     }

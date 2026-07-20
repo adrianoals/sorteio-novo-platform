@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { compareDrawResults } from "@/lib/draw-result-order";
+import { formatDrawDate } from "@/lib/draw-date";
 
 type ResultRow = {
   apartmentNumber: string;
@@ -162,14 +163,7 @@ export function SorteioPageClient({
   }
 
   const createdAtFormatted = draw?.createdAt
-    ? new Date(draw.createdAt).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+    ? formatDrawDate(draw.createdAt)
     : "";
 
   return (
