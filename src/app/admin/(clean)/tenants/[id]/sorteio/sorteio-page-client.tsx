@@ -126,6 +126,41 @@ export function SorteioPageClient({
     );
   }
 
+  function handleDownloadQrCode() {
+    const svg = document.getElementById("result-qrcode");
+    if (!(svg instanceof SVGSVGElement)) return;
+    const serialized = new XMLSerializer().serializeToString(svg);
+    const source = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+    const sourceUrl = URL.createObjectURL(source);
+    const image = new window.Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `qrcode-resultado-${tenantSlug}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+      URL.revokeObjectURL(sourceUrl);
+    };
+    image.src = sourceUrl;
+  }
+
+  async function handleCopyResultLink() {
+    if (!resultUrl) return;
+    await navigator.clipboard.writeText(resultUrl);
+  }
+
   const createdAtFormatted = draw?.createdAt
     ? new Date(draw.createdAt).toLocaleString("pt-BR", {
         day: "2-digit",
@@ -289,10 +324,26 @@ export function SorteioPageClient({
 
             {resultUrl && (
               <div className="flex flex-col items-center gap-2 pt-2 no-print">
-                <QRCodeSVG value={resultUrl} size={160} level="M" />
+                <QRCodeSVG id="result-qrcode" value={resultUrl} size={160} level="M" marginSize={2} />
                 <p className="text-sm text-[#5b4d7a] max-w-[220px]">
                   Escaneie o QR Code para acessar o resultado na página pública
                 </p>
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadQrCode}
+                    className="rounded-lg border border-[#250E62] px-4 py-2 text-sm font-medium text-[#250E62] hover:bg-[#faf9ff]"
+                  >
+                    Baixar QR Code (PNG)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyResultLink}
+                    className="rounded-lg border border-[#e2deeb] px-4 py-2 text-sm font-medium text-[#5936CC] hover:bg-[#faf9ff]"
+                  >
+                    Copiar link público
+                  </button>
+                </div>
               </div>
             )}
           </div>
